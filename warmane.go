@@ -21,8 +21,8 @@ func main() {
 	glog.Info("warmane collect daily point running")
 	loginData := map[string]string{
 		"return":               "",
-		"userID":               "zhujiajunwow",
-		"userPW":               "jiajunwow23@",
+		"userID":               "1",
+		"userPW":               "2",
 		"g-recaptcha-response": "",
 	}
 	defer glog.Flush()
