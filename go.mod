@@ -3,9 +3,11 @@ module gitub.com/zJiajun/warmane
 go 1.21.0
 
 require (
+	github.com/2captcha/2captcha-go v1.1.2
+	github.com/andybalholm/brotli v1.0.5
 	github.com/gocolly/colly/v2 v2.1.0
 	github.com/golang/glog v1.1.2
-	github.com/2captcha/2captcha-go v1.1.2
+	github.com/klauspost/compress v1.16.7
 )
 
 require (
