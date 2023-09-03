@@ -26,6 +26,7 @@ func main() {
 		"g-recaptcha-response": "",
 	}
 	defer glog.Flush()
+	captchaPass()
 
 	c := colly.NewCollector()
 	c.SetRequestTimeout(5 * time.Second)
@@ -57,6 +58,14 @@ func requestInit(c *colly.Collector) {
 }
 
 func captchaPass() {
-	client := api2captcha.NewClient("YOUR_API_KEY")
-	client.ApiKey = ""
+	client := api2captcha.NewClient("")
+	cap := api2captcha.ReCaptcha{
+		SiteKey: "",
+		Url:     "https://cn.2captcha.com/demo/recaptcha-v2",
+	}
+	code, err := client.Solve(cap.ToRequest())
+	if err != nil {
+		glog.Error("captcha solve error:", err)
+	}
+	glog.Info("captcha return code %s", code)
 }
