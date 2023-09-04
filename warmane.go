@@ -10,16 +10,29 @@ import (
 	"github.com/gocolly/colly/v2/extensions"
 	"github.com/golang/glog"
 	"github.com/klauspost/compress/flate"
+	"gopkg.in/yaml.v3"
 	"io"
+	"os"
 	"time"
 )
 
+type Config struct {
+	BaseUrl        string              `yaml:"base_url"`
+	AccountUrl     string              `yaml:"account_url"`
+	LoginUrl       string              `yaml:"login_url"`
+	LogoutUrl      string              `yaml:"logout_url"`
+	Accounts       map[string]Accounts `yaml:"accounts"`
+	CaptchaApiKey  string              `yaml:"captcha_api_key"`
+	WarmaneSiteKey string              `yaml:"warmane_site_key"`
+}
+type Accounts struct {
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+}
+
+var conf Config
+
 const (
-	baseUrl    = "https://www.warmane.com"
-	accountUrl = baseUrl + "/account"
-	loginUrl   = accountUrl + "/login"
-	//see https://cn.2captcha.com/2captcha-api#solving_recaptchav2_new
-	siteKey              = "6LfXRRsUAAAAAEApnVwrtQ7aFprn4naEcc05AZUR"
 	csrfTokenSelector    = "meta[name='csrf-token']"
 	coinsSelector        = ".myCoins"
 	pointsSelector       = ".myPoints"
@@ -29,7 +42,23 @@ const (
 func init() {
 	flag.Parse()
 }
+
+func loadConf() {
+	file, err := os.ReadFile("conf.yml")
+	if err != nil {
+		glog.Error("can't find conf.yml file")
+		return
+	}
+	err = yaml.Unmarshal(file, &conf)
+	if err != nil {
+		glog.Error("load conf.yml error, ", err)
+		return
+	}
+	glog.Info("load conf.yml success, ", conf)
+}
+
 func main() {
+	loadConf()
 	defer glog.Flush()
 	glog.Info("warmane collect daily point running")
 	c := colly.NewCollector()
@@ -43,25 +72,29 @@ func main() {
 		glog.Info("warmane site csrf-token: ", csrfToken)
 	}
 	c.OnHTML(csrfTokenSelector, csrfTokenCallback)
-	err := c.Visit(loginUrl)
+	err := c.Visit(conf.LoginUrl)
 	if err != nil {
-		glog.Errorf("warmane visit %s error %v", loginUrl, err)
+		glog.Errorf("warmane visit %s error %v", conf.LoginUrl, err)
 		return
 	}
 	c.OnHTMLDetach(csrfTokenSelector)
 
-	loginData := map[string]string{
-		"return": "",
-		"userID": "1",
-		"userPW": "2",
-	}
+	loginSuccuss := false
+	loginData := make(map[string]string, 4)
+	loginData["return"] = ""
+	loginData["userID"] = conf.Accounts["accounts1"].Username
+	loginData["userPW"] = conf.Accounts["accounts1"].Password
 	code := handleCaptcha()
+	if code == "" {
+		glog.Error("2captcha error")
+		return
+	}
 	loginData["g-recaptcha-response"] = code
 
 	requestCallback := func(request *colly.Request) {
 		glog.Infof("[requestCallback] warmane %s onRequest", request.URL)
-		request.Headers.Set("Origin", baseUrl)
-		request.Headers.Set("Referer", loginUrl)
+		request.Headers.Set("Origin", conf.BaseUrl)
+		request.Headers.Set("Referer", conf.LoginUrl)
 		request.Headers.Set("Accept", "application/json, text/javascript, */*; q=0.01")
 		request.Headers.Set("Accept-Encoding", "gzip, deflate, br")
 		request.Headers.Set("X-Csrf-Token", csrfToken)
@@ -92,66 +125,83 @@ func main() {
 		response.Body = respBytes
 		glog.Infof("[responseCallback] warmane %s response statusCode %d, body size %d",
 			response.Request.URL, response.StatusCode, len(respBytes))
-		if loginUrl == response.Request.URL.String() && response.Request.Method == "POST" {
+		if conf.LoginUrl == response.Request.URL.String() && response.Request.Method == "POST" {
 			bodyText := string(response.Body)
 			if bodyText == loginSuccessBodyText {
+				loginSuccuss = true
 				glog.Info("[responseCallback] warmane login success")
 			} else {
 				glog.Error("[responseCallback] warmane login failure: ", bodyText)
 			}
 		}
-		if accountUrl == response.Request.URL.String() && response.Request.Method == "POST" {
+		if conf.AccountUrl == response.Request.URL.String() && response.Request.Method == "POST" {
 			bodyText := string(response.Body)
 			glog.Info("[responseCallback] warmane collect points body: ", bodyText)
 		}
 	}
 	c.OnResponse(responseCallback)
 
-	loginErr := c.Post(loginUrl, loginData)
+	loginErr := c.Post(conf.LoginUrl, loginData)
 	if loginErr != nil {
 		glog.Error("warmane login error: ", loginErr)
 		return
 	}
-
-	c.OnHTML(coinsSelector, func(element *colly.HTMLElement) {
-		coins := element.Text
-		glog.Info("warmane account coins: ", coins)
-	})
-	c.OnHTML(pointsSelector, func(element *colly.HTMLElement) {
-		points := element.Text
-		glog.Info("warmane account points: ", points)
-	})
-	accountUrlErr := c.Visit(accountUrl)
-	if accountUrlErr != nil {
-		glog.Error("after login visit error: ", accountUrlErr)
+	if loginSuccuss {
+		c.OnHTML(coinsSelector, func(element *colly.HTMLElement) {
+			coins := element.Text
+			glog.Info("warmane account coins: ", coins)
+		})
+		c.OnHTML(pointsSelector, func(element *colly.HTMLElement) {
+			points := element.Text
+			glog.Info("warmane account points: ", points)
+		})
+		accountUrlErr := c.Visit(conf.AccountUrl)
+		if accountUrlErr != nil {
+			glog.Error("after login visit error: ", accountUrlErr)
+			return
+		}
+		collectPointsData := map[string]string{
+			"collectpoints": "true",
+		}
+		collectPointsErr := c.Post(conf.AccountUrl, collectPointsData)
+		if collectPointsErr != nil {
+			glog.Error("collect points error: ", collectPointsErr)
+			return
+		}
+		err := c.Visit(conf.AccountUrl)
+		if err != nil {
+			return
+		}
+		err = c.Visit(conf.LogoutUrl)
+		if err != nil {
+			return
+		}
 	}
-	collectPointsData := map[string]string{
-		"collectpoints": "true",
-	}
-	collectPointsErr := c.Post(accountUrl, collectPointsData)
-	if collectPointsErr != nil {
-		glog.Error("collect points error: ", collectPointsErr)
-	}
-	c.Visit(accountUrl)
 }
 
 func handleCaptcha() string {
-	client := api2captcha.NewClient("")
+	client := api2captcha.NewClient(conf.CaptchaApiKey)
 	client.DefaultTimeout = 120
 	client.RecaptchaTimeout = 600
 	client.PollingInterval = 30
 
+	code := ""
 	b1 := queryBalance(client)
-	code := solveCaptcha(client)
-	b2 := queryBalance(client)
-	glog.Info("2captcha solve captcha cost: ", b2-b1)
+	if b1 > 0 {
+		code = solveCaptcha(client)
+		if len(code) > 0 {
+			b2 := queryBalance(client)
+			glog.Info("2captcha solve captcha cost: ", b2-b1)
+		}
+	}
 	return code
 }
 
 func queryBalance(client *api2captcha.Client) float64 {
 	balance, err := client.GetBalance()
 	if err != nil {
-		glog.Error("2captcha get balance error: ", err)
+		glog.Error("2captcha get balance error, ", err)
+		return 0
 	}
 	glog.Info("2captcha account balance: ", balance)
 	return balance
@@ -161,13 +211,14 @@ func solveCaptcha(client *api2captcha.Client) string {
 	glog.Info("2captcha solve captcha begin, waiting......")
 	defer logElapsedTime("2captcha solve captcha finish", time.Now())
 	captcha := api2captcha.ReCaptcha{
-		SiteKey: siteKey,
-		Url:     loginUrl,
+		SiteKey: conf.WarmaneSiteKey,
+		Url:     conf.LoginUrl,
 		Action:  "verify",
 	}
 	code, err := client.Solve(captcha.ToRequest())
 	if err != nil {
-		glog.Error("2captcha solve error: ", err)
+		glog.Error("2captcha solve error, ", err)
+		return ""
 	}
 	glog.Info("2captcha return code: ", code)
 	return code

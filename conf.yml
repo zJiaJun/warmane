@@ -1,0 +1,16 @@
+base_url: https://www.warmane.com
+account_url: https://www.warmane.com/account
+login_url: https://www.warmane.com/account/login
+logout_url: https://www.warmane.com/account/logout
+captcha_api_key: 2captcha_api_key
+# set https://cn.2captcha.com/2captcha-api#solving_recaptchav2_new
+warmane_site_key: 6LfXRRsUAAAAAEApnVwrtQ7aFprn4naEcc05AZUR
+
+
+accounts:
+  accounts1:
+    username: your-username
+    password: your-password
+  accounts2:
+    username: your-username
+    password: your-password
