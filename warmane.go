@@ -33,10 +33,12 @@ type Accounts struct {
 var conf Config
 
 const (
-	csrfTokenSelector    = "meta[name='csrf-token']"
-	coinsSelector        = ".myCoins"
-	pointsSelector       = ".myPoints"
-	loginSuccessBodyText = "{\"redirect\":[\"\\/account\"]}"
+	csrfTokenSelector        = "meta[name='csrf-token']"
+	coinsSelector            = ".myCoins"
+	pointsSelector           = ".myPoints"
+	loginSuccessBody         = "{\"redirect\":[\"\\/account\"]}"
+	incorrectLoginBody       = "{\"messages\":{\"error\":[\"Incorrect account name or password.\"]}}"
+	alreadyCollectPointsBody = "{\"messages\":{\"error\":[\"You have already collected your points today.\"]}}"
 )
 
 func init() {
@@ -62,6 +64,8 @@ func main() {
 	defer glog.Flush()
 	glog.Info("warmane collect daily point running")
 	c := colly.NewCollector()
+	//允许重复访问URL
+	c.AllowURLRevisit = true
 	c.SetRequestTimeout(5 * time.Second)
 	//Add Random User agent
 	extensions.RandomUserAgent(c)
@@ -127,7 +131,7 @@ func main() {
 			response.Request.URL, response.StatusCode, len(respBytes))
 		if conf.LoginUrl == response.Request.URL.String() && response.Request.Method == "POST" {
 			bodyText := string(response.Body)
-			if bodyText == loginSuccessBodyText {
+			if bodyText == loginSuccessBody {
 				loginSuccuss = true
 				glog.Info("[responseCallback] warmane login success")
 			} else {
