@@ -16,26 +16,32 @@ import (
 	"time"
 )
 
-type Config struct {
-	BaseUrl        string              `yaml:"base_url"`
-	AccountUrl     string              `yaml:"account_url"`
-	LoginUrl       string              `yaml:"login_url"`
-	LogoutUrl      string              `yaml:"logout_url"`
-	Accounts       map[string]Accounts `yaml:"accounts"`
-	CaptchaApiKey  string              `yaml:"captcha_api_key"`
-	WarmaneSiteKey string              `yaml:"warmane_site_key"`
-}
-type Accounts struct {
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
-}
+type (
+	Config struct {
+		Url struct {
+			Base    string `yaml:"base"`
+			Account string `yaml:"account"`
+			Login   string `yaml:"login"`
+			Logout  string `yaml:"logout"`
+		}
+		Selector struct {
+			CsrfToken string `yaml:"csrfToken"`
+			Coins     string `yaml:"coins"`
+			Points    string `yaml:"points"`
+		}
+		CaptchaApiKey  string    `yaml:"captchaApiKey"`
+		WarmaneSiteKey string    `yaml:"warmaneSiteKey"`
+		Accounts       []Account `yaml:"accounts"`
+	}
+	Account struct {
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
+	}
+)
 
 var conf Config
 
 const (
-	csrfTokenSelector        = "meta[name='csrf-token']"
-	coinsSelector            = ".myCoins"
-	pointsSelector           = ".myPoints"
 	loginSuccessBody         = "{\"redirect\":[\"\\/account\"]}"
 	incorrectLoginBody       = "{\"messages\":{\"error\":[\"Incorrect account name or password.\"]}}"
 	alreadyCollectPointsBody = "{\"messages\":{\"error\":[\"You have already collected your points today.\"]}}"
@@ -75,19 +81,19 @@ func main() {
 		csrfToken = element.Attr("content")
 		glog.Info("warmane site csrf-token: ", csrfToken)
 	}
-	c.OnHTML(csrfTokenSelector, csrfTokenCallback)
-	err := c.Visit(conf.LoginUrl)
+	c.OnHTML(conf.Selector.CsrfToken, csrfTokenCallback)
+	err := c.Visit(conf.Url.Login)
 	if err != nil {
-		glog.Errorf("warmane visit %s error %v", conf.LoginUrl, err)
+		glog.Errorf("warmane visit %s error %v", conf.Url.Login, err)
 		return
 	}
-	c.OnHTMLDetach(csrfTokenSelector)
+	c.OnHTMLDetach(conf.Selector.CsrfToken)
 
 	loginSuccuss := false
 	loginData := make(map[string]string, 4)
 	loginData["return"] = ""
-	loginData["userID"] = conf.Accounts["accounts1"].Username
-	loginData["userPW"] = conf.Accounts["accounts1"].Password
+	loginData["userID"] = conf.Accounts[0].Username
+	loginData["userPW"] = conf.Accounts[0].Password
 	code := handleCaptcha()
 	if code == "" {
 		glog.Error("2captcha error")
@@ -97,8 +103,8 @@ func main() {
 
 	requestCallback := func(request *colly.Request) {
 		glog.Infof("[requestCallback] warmane %s onRequest", request.URL)
-		request.Headers.Set("Origin", conf.BaseUrl)
-		request.Headers.Set("Referer", conf.LoginUrl)
+		request.Headers.Set("Origin", conf.Url.Base)
+		request.Headers.Set("Referer", conf.Url.Login)
 		request.Headers.Set("Accept", "application/json, text/javascript, */*; q=0.01")
 		request.Headers.Set("Accept-Encoding", "gzip, deflate, br")
 		request.Headers.Set("X-Csrf-Token", csrfToken)
@@ -129,7 +135,7 @@ func main() {
 		response.Body = respBytes
 		glog.Infof("[responseCallback] warmane %s response statusCode %d, body size %d",
 			response.Request.URL, response.StatusCode, len(respBytes))
-		if conf.LoginUrl == response.Request.URL.String() && response.Request.Method == "POST" {
+		if conf.Url.Login == response.Request.URL.String() && response.Request.Method == "POST" {
 			bodyText := string(response.Body)
 			if bodyText == loginSuccessBody {
 				loginSuccuss = true
@@ -138,28 +144,28 @@ func main() {
 				glog.Error("[responseCallback] warmane login failure: ", bodyText)
 			}
 		}
-		if conf.AccountUrl == response.Request.URL.String() && response.Request.Method == "POST" {
+		if conf.Url.Account == response.Request.URL.String() && response.Request.Method == "POST" {
 			bodyText := string(response.Body)
 			glog.Info("[responseCallback] warmane collect points body: ", bodyText)
 		}
 	}
 	c.OnResponse(responseCallback)
 
-	loginErr := c.Post(conf.LoginUrl, loginData)
+	loginErr := c.Post(conf.Url.Login, loginData)
 	if loginErr != nil {
 		glog.Error("warmane login error: ", loginErr)
 		return
 	}
 	if loginSuccuss {
-		c.OnHTML(coinsSelector, func(element *colly.HTMLElement) {
+		c.OnHTML(conf.Selector.Coins, func(element *colly.HTMLElement) {
 			coins := element.Text
 			glog.Info("warmane account coins: ", coins)
 		})
-		c.OnHTML(pointsSelector, func(element *colly.HTMLElement) {
+		c.OnHTML(conf.Selector.Points, func(element *colly.HTMLElement) {
 			points := element.Text
 			glog.Info("warmane account points: ", points)
 		})
-		accountUrlErr := c.Visit(conf.AccountUrl)
+		accountUrlErr := c.Visit(conf.Url.Account)
 		if accountUrlErr != nil {
 			glog.Error("after login visit error: ", accountUrlErr)
 			return
@@ -167,16 +173,16 @@ func main() {
 		collectPointsData := map[string]string{
 			"collectpoints": "true",
 		}
-		collectPointsErr := c.Post(conf.AccountUrl, collectPointsData)
+		collectPointsErr := c.Post(conf.Url.Account, collectPointsData)
 		if collectPointsErr != nil {
 			glog.Error("collect points error: ", collectPointsErr)
 			return
 		}
-		err := c.Visit(conf.AccountUrl)
+		err := c.Visit(conf.Url.Account)
 		if err != nil {
 			return
 		}
-		err = c.Visit(conf.LogoutUrl)
+		err = c.Visit(conf.Url.Logout)
 		if err != nil {
 			return
 		}
@@ -216,7 +222,7 @@ func solveCaptcha(client *api2captcha.Client) string {
 	defer logElapsedTime("2captcha solve captcha finish", time.Now())
 	captcha := api2captcha.ReCaptcha{
 		SiteKey: conf.WarmaneSiteKey,
-		Url:     conf.LoginUrl,
+		Url:     conf.Url.Login,
 		Action:  "verify",
 	}
 	code, err := client.Solve(captcha.ToRequest())
