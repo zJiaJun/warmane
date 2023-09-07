@@ -46,6 +46,7 @@ const (
 	successCollectPointsBody = "{\"messages\":{\"success\":[\"Daily points collected.\"]},\"points\":[10.4]}"
 	incorrectLoginBody       = "{\"messages\":{\"error\":[\"Incorrect account name or password.\"]}}"
 	alreadyCollectPointsBody = "{\"messages\":{\"error\":[\"You have already collected your points today.\"]}}"
+	noLoggedInGameBody       = " {\"messages\":{\"error\":[\"You have not logged in-game today.\"]}}\n"
 )
 
 func init() {
