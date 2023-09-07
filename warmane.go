@@ -43,6 +43,7 @@ var conf Config
 
 const (
 	loginSuccessBody         = "{\"redirect\":[\"\\/account\"]}"
+	successCollectPointsBody = "{\"messages\":{\"success\":[\"Daily points collected.\"]},\"points\":[10.4]}"
 	incorrectLoginBody       = "{\"messages\":{\"error\":[\"Incorrect account name or password.\"]}}"
 	alreadyCollectPointsBody = "{\"messages\":{\"error\":[\"You have already collected your points today.\"]}}"
 )
@@ -178,7 +179,7 @@ func main() {
 			glog.Error("collect points error: ", collectPointsErr)
 			return
 		}
-		err := c.Visit(conf.Url.Account)
+		err = c.Visit(conf.Url.Account)
 		if err != nil {
 			return
 		}
