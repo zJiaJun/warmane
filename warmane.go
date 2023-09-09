@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"compress/gzip"
+	"encoding/json"
 	"errors"
 	"flag"
 	"github.com/andybalholm/brotli"
@@ -40,8 +41,17 @@ type (
 	}
 )
 
+type BodyMsg struct {
+	Messages struct {
+		Success []string `json:"success"`
+		Error   []string `json:"error"`
+	}
+	Points []float64 `json:"points"`
+}
+
 var (
 	conf            Config
+	bodyMsg         BodyMsg
 	wg              sync.WaitGroup
 	csrfTokenError  = errors.New("查询获取csrfToken错误")
 	confNotFound    = errors.New("配置文件[config.yml]未找到, 请把配置文件放到程序同一目录下")
@@ -49,11 +59,13 @@ var (
 )
 
 const (
-	loginSuccessBody         = "{\"redirect\":[\"\\/account\"]}"
-	successCollectPointsBody = "{\"messages\":{\"success\":[\"Daily points collected.\"]},\"points\":[10.4]}"
-	incorrectLoginBody       = "{\"messages\":{\"error\":[\"Incorrect account name or password.\"]}}"
-	alreadyCollectPointsBody = "{\"messages\":{\"error\":[\"You have already collected your points today.\"]}}"
-	noLoggedInGameBody       = " {\"messages\":{\"error\":[\"You have not logged in-game today.\"]}}\n"
+	/*
+			{"messages":{"error":["Incorrect account name or password."]}}
+			{"messages":{"error":["You have already collected your points today."]}}
+		 	{"messages":{"error":["You have not logged in-game today."]}}
+			{"messages":{"success":["Daily points collected."]},"points":[10.4]}
+	*/
+	loginSuccessBody = "{\"redirect\":[\"\\/account\"]}"
 )
 
 func init() {
@@ -121,15 +133,13 @@ func loginAndCollect(account Account) {
 		return
 	}
 
-	loginSuccuss := false
+	loginSuccess := false
 	loginData := make(map[string]string, 4)
 	loginData["return"] = ""
 	loginData["userID"] = account.Username
 	loginData["userPW"] = account.Password
 
-	capt := captcha{
-		captchaApiKey: conf.CaptchaApiKey,
-	}
+	capt := captcha{}
 	code, err := capt.HandleCaptcha()
 	if err != nil {
 		handleError(err)
@@ -161,15 +171,39 @@ func loginAndCollect(account Account) {
 		if conf.Url.Login == response.Request.URL.String() && response.Request.Method == "POST" {
 			bodyText := string(response.Body)
 			if bodyText == loginSuccessBody {
-				loginSuccuss = true
+				loginSuccess = true
 				glog.Infof("账号[%s]登录成功", account.Username)
 			} else {
-				glog.Errorf("账号[%s]登录失败, %s", account.Username, bodyText)
+				err := json.Unmarshal(response.Body, &bodyMsg)
+				if err != nil {
+					glog.Errorf("账号[%s]登陆解码Json错误, 返回内容: %s", account.Username, bodyText)
+					return
+				}
+				if len(bodyMsg.Messages.Error) > 0 {
+					errMsg := bodyMsg.Messages.Error[0]
+					glog.Errorf("账号[%s]登录失败, %s", account.Username, errMsg)
+				} else {
+					glog.Errorf("账号[%s]登录失败, %s", account.Username, bodyText)
+				}
 			}
 		}
 		if conf.Url.Account == response.Request.URL.String() && response.Request.Method == "POST" {
 			bodyText := string(response.Body)
-			glog.Infof("账号[%s]自动收集签到点, 网站返回内容: %s", account.Username, bodyText)
+			err := json.Unmarshal(response.Body, &bodyMsg)
+			if err != nil {
+				glog.Errorf("账号[%s]收集签到解码Json错误, 返回内容: %s", account.Username, bodyText)
+				return
+			}
+			if len(bodyMsg.Messages.Success) > 0 && len(bodyMsg.Points) > 0 {
+				successMsg := bodyMsg.Messages.Success[0]
+				points := bodyMsg.Points[0]
+				glog.Infof("账号[%s]自动收集签到点成功, 返回内容: %s, 签到点: %f", account.Username, successMsg, points)
+			} else if len(bodyMsg.Messages.Error) > 0 {
+				errorMsg := bodyMsg.Messages.Error[0]
+				glog.Infof("账号[%s]自动收集签到点失败, 返回内容: %s", account.Username, errorMsg)
+			} else {
+				glog.Infof("账号[%s]自动收集签到点失败, 返回内容: %s", account.Username, bodyText)
+			}
 		}
 	}
 	c.OnResponse(responseCallback)
@@ -179,7 +213,7 @@ func loginAndCollect(account Account) {
 		glog.Errorf("账号[%s]登录错误: %v", account.Username, loginErr)
 		return
 	}
-	if loginSuccuss {
+	if loginSuccess {
 		coins := ""
 		points := ""
 		c.OnHTML(conf.Selector.Coins, func(element *colly.HTMLElement) {
@@ -248,7 +282,9 @@ func decodeBody(response *colly.Response) ([]byte, error) {
 		return io.ReadAll(gr)
 	case "deflate":
 		zr := flate.NewReader(bytes.NewBuffer(responseBody))
-		defer zr.Close()
+		defer func(zr io.ReadCloser) {
+			_ = zr.Close()
+		}(zr)
 		return io.ReadAll(zr)
 	default:
 		return io.ReadAll(bytes.NewBuffer(responseBody))

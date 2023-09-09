@@ -8,11 +8,10 @@ import (
 )
 
 type captcha struct {
-	captchaApiKey string
 }
 
 func (c *captcha) HandleCaptcha() (string, error) {
-	client := api2captcha.NewClient(c.captchaApiKey)
+	client := api2captcha.NewClient(conf.CaptchaApiKey)
 	client.DefaultTimeout = 120
 	client.RecaptchaTimeout = 600
 	client.PollingInterval = 30
