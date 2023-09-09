@@ -11,6 +11,7 @@ before:
     - go mod tidy
 builds:
   - id: "warmane"
+    binary: "warmane_{{ .Version }}"
     main: warmane.go
     env:
       - CGO_ENABLED=0
@@ -21,24 +22,27 @@ builds:
     goarch:
       - amd64
       - arm64
+    goarm:
+      - 6
+      - 7
 
 archives:
-  - format: tar.gz
+  - format: zip
     # this name template makes the OS and Arch compatible with the results of uname.
     name_template: >-
-      {{ .ProjectName }}_
+      {{ .ProjectName }}_{{ .Version }}_
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
-    # use zip for windows archives
-    format_overrides:
-    - goos: windows
-      format: zip
+    wrap_in_directory: false
+    files:
+      - README*.md
+      - conf.yml
+
 
 checksum:
-  name_template: 'checksums.txt'
+  name_template: '{{ .ProjectName }}_checksums.txt'
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
 changelog:

@@ -11,6 +11,7 @@ import (
 	"github.com/gocolly/colly/v2/extensions"
 	"github.com/golang/glog"
 	"github.com/klauspost/compress/flate"
+	"gitub.com/zJiajun/warmane/captcha"
 	"gopkg.in/yaml.v3"
 	"io"
 	"os"
@@ -139,7 +140,11 @@ func loginAndCollect(account Account) {
 	loginData["userID"] = account.Username
 	loginData["userPW"] = account.Password
 
-	capt := captcha{}
+	capt := captcha.Captcha{
+		CaptchaApiKey:  conf.CaptchaApiKey,
+		WarmaneSiteKey: conf.WarmaneSiteKey,
+		LoginUrl:       conf.Url.Login,
+	}
 	code, err := capt.HandleCaptcha()
 	if err != nil {
 		handleError(err)

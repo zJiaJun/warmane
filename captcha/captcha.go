@@ -1,4 +1,4 @@
-package main
+package captcha
 
 import (
 	"fmt"
@@ -7,11 +7,14 @@ import (
 	"time"
 )
 
-type captcha struct {
+type Captcha struct {
+	CaptchaApiKey  string
+	WarmaneSiteKey string
+	LoginUrl       string
 }
 
-func (c *captcha) HandleCaptcha() (string, error) {
-	client := api2captcha.NewClient(conf.CaptchaApiKey)
+func (c *Captcha) HandleCaptcha() (string, error) {
+	client := api2captcha.NewClient(c.CaptchaApiKey)
 	client.DefaultTimeout = 120
 	client.RecaptchaTimeout = 600
 	client.PollingInterval = 30
@@ -19,7 +22,7 @@ func (c *captcha) HandleCaptcha() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("验证码破解服务查询余额失败, %w", err)
 	}
-	code, err := solveCaptcha(client)
+	code, err := solveCaptcha(client, c.WarmaneSiteKey, c.LoginUrl)
 	if err != nil {
 		return "", fmt.Errorf("验证码破解服务执行失败, %w", err)
 	}
@@ -35,12 +38,12 @@ func queryBalance(client *api2captcha.Client) (float64, error) {
 	return balance, nil
 }
 
-func solveCaptcha(client *api2captcha.Client) (string, error) {
+func solveCaptcha(client *api2captcha.Client, warmaneSiteKey string, loginUrl string) (string, error) {
 	start := time.Now()
 	glog.Info("验证码破解服务开始执行, 需等待1-2分钟")
 	c := api2captcha.ReCaptcha{
-		SiteKey: conf.WarmaneSiteKey,
-		Url:     conf.Url.Login,
+		SiteKey: warmaneSiteKey,
+		Url:     loginUrl,
 		Action:  "verify",
 	}
 	code, err := client.Solve(c.ToRequest())
