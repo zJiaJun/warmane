@@ -59,6 +59,8 @@ captchaApiKey配置项，注册[2captcha](https://cn.2captcha.com/)成功后，�
 以上配置只配置了一个账号密码，按yml配置文件规范，注意不要漏掉配置项冒号后面的空格, 如username:` username`
 
 ## 使用说明
+不支持开通二次验证的账号，如Google Auth验证器或邮箱验证
+
 下载[https://github.com/zJiaJun/warmane/releases/](https://github.com/zJiaJun/warmane/releases/)最新的release
 包，根据自己的操作系统选择，这里以windows_x86_64.zip为例子说明
 * 下载并解压，这里的目录是`D:\Download\warmane_0.1.1_Windows_x86_64`
