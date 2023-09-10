@@ -28,11 +28,13 @@
 
 
 ## 配置文件
-以下两项配置是需要修改的
+配置文件conf.yml会和可执行程序打包在一起，默认的配置文件无法运行，需要修改以下两项配置，其他配置不用修改。
 
 `captchaApiKey`: 验证码识别服务的API密钥
 
 `accounts`: 登录warmane网站的账号和密码,可配置多个
+
+默认配置：
 ```yaml
 captchaApiKey: 2captcha_api_key
 
@@ -41,8 +43,21 @@ accounts:
     password: your-password
   - username: your-username
     password: your-password
-
-
 ```
+修改成：
+```yaml
+captchaApiKey: c8a6xxxxxxxxxxxxxxxxxa80de
+
+accounts:
+  - username: your-username
+    password: your-password
+```
+captchaApiKey配置项，注册[2captcha](https://cn.2captcha.com/)成功后，切换到开发者，复制API密钥到配置文件中
+![screenshot4](screenshot/img4.png "screenshot4")
+![screenshot5](screenshot/img5.png "screenshot5")
+
+以上配置只配置了一个账号密码，按yml配置文件规范，注意不要漏掉配置项冒号后面的空格, 如username:` username`
 
 ## 使用说明
+下载[https://github.com/zJiaJun/warmane/releases/](https://github.com/zJiaJun/warmane/releases/)最新的release
+包，根据自己的操作系统选择，这里以windows_x86_64为例子说明
