@@ -60,4 +60,10 @@ captchaApiKey配置项，注册[2captcha](https://cn.2captcha.com/)成功后，�
 
 ## 使用说明
 下载[https://github.com/zJiaJun/warmane/releases/](https://github.com/zJiaJun/warmane/releases/)最新的release
-包，根据自己的操作系统选择，这里以windows_x86_64为例子说明
+包，根据自己的操作系统选择，这里以windows_x86_64.zip为例子说明
+* 下载并解压，这里的目录是`D:\Download\warmane_0.1.1_Windows_x86_64`
+![screenshot6](screenshot/img6.png "screenshot6")
+* 修改解压出来的conf.yml配置文件
+* 打开windows的控制台程序，进入到下载解压的目录 `cd D:\Download\warmane_0.1.1_Windows_x86_64\`
+* 运行程序`.\warmane_0.1.1.exe --logtostderr=true`，等待程序运行结束
+![screenshot7](screenshot/img7.png "screenshot7")
