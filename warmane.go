@@ -107,12 +107,12 @@ func handleError(err error) {
 	if err == nil {
 		return
 	}
-	switch err {
-	case confNotFound:
+	switch {
+	case errors.Is(err, confNotFound):
 		glog.Error(err.Error())
-	case confDecodeError:
+	case errors.Is(err, confDecodeError):
 		glog.Error(err.Error())
-	case csrfTokenError:
+	case errors.Is(err, csrfTokenError):
 		glog.Error(err.Error())
 	default:
 		glog.Error(err.Error())
