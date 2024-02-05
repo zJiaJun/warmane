@@ -13,17 +13,15 @@
 + [ ] 多维度查询
 
 ## 说明文档
-<details>
-<summary>使用的技术</summary>
+<details><summary>使用的技术</summary><p>
 
   * go language
   * [colly](https://github.com/gocolly/colly/): 轻量和优雅的爬虫框架
   * [2captcha-go](https://github.com/2captcha/2captcha-go): 验证码识别服务SDK
-</details>
+</p></details>
 
 
-<details>
-<summary>验证码服务说明</summary>
+<details><summary>验证码服务说明</summary><p>
 
 自动登录的验证码识别是由[2captcha](https://cn.2captcha.com/)提供的，是一个收费服务，简单来说就是打码平台，支持验证码类型比国内的同类型平台多很多，单次验证价格比国内的也便宜少许。
 
@@ -41,11 +39,10 @@
 ![screenshot1](screenshot/img1.png "screenshot1")
 ![screenshot2](screenshot/img2.png "screenshot2")
 ![screenshot3](screenshot/img3.png "screenshot3")
-</details>
+</p></details>
 
 
-<details>
-<summary>配置文件</summary>
+<details><summary>配置文件</summary><p>
 
 配置文件`conf.yml`会和可执行程序打包在一起,默认的配置文件无法运行,需要修改以下两项配置,其他配置不用修改
 
@@ -77,11 +74,10 @@ captchaApiKey配置项，注册[2captcha](https://cn.2captcha.com/)成功后，�
 
 以上配置只配置了一个账号密码，按yml配置文件规范，注意不要漏掉配置项冒号后面的空格  
 如username:` username`
-</details>
+</p></details>
 
 
-<details>
-<summary>使用说明</summary>
+<details><summary>使用说明</summary><p>
 
 * 不支持开通二次验证的账号，Google Auth验证器或邮箱验证
 * 下载[https://github.com/zJiaJun/warmane/releases/](https://github.com/zJiaJun/warmane/releases/)最新的release
@@ -92,4 +88,4 @@ captchaApiKey配置项，注册[2captcha](https://cn.2captcha.com/)成功后，�
 * 打开windows的控制台程序，进入到下载解压的目录 `cd D:\Download\warmane_0.1.1_Windows_x86_64\`
 * 运行程序`.\warmane_0.1.1.exe --logtostderr=true`，等待程序运行结束
   ![screenshot7](screenshot/img7.png "screenshot7")
-</details>
+</p></details>
