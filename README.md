@@ -1,14 +1,28 @@
-# warmane daily points collector
+# About warmane
 
 ## 这是什么
-[Warmane](https://www.warmane.com/)是一个国外WLK私服，已经稳定运行10年多。有一项功能，每天登录过WOW，可以登录网站签到积分，
-由于服务器在国外，登录网站需要Google reCAPTCHA的验证码，每次登录需要选择图片，翻墙代理不稳定的时候，需要点很多次。此程序就是自动登录账号并签到积分，省去每日的重复性工作。
+关于[Warmane](https://www.warmane.com/)网站的一些自动化操作和数据爬取分析功能
 
-## 使用的技术
+## 后续计划
++ [x] 自动登录
++ [x] 验证码识别
++ [x] 自动Points签到
++ [x] 多账户支持
++ [ ] 商城人物数据爬去
++ [ ] 人物数据分析并存储
++ [ ] 多维度查询
+
+<details>
+<summary>使用的技术</summary>
+* go language
 * [colly](https://github.com/gocolly/colly/): 轻量和优雅的爬虫框架
 * [2captcha-go](https://github.com/2captcha/2captcha-go): 验证码识别服务SDK
+</details>
 
-## 验证码服务说明
+<hr>
+
+<details>
+<summary>验证码服务说明</summary>
 自动登录的验证码识别是由[2captcha](https://cn.2captcha.com/)提供的，是一个收费服务，简单来说就是打码平台，支持验证码类型比国内的同类型平台多很多，单次验证价格比国内的也便宜少许。
 
 验证识别recaptchav2类型(warmane网站使用)的验证码费用是一次`0.00299`美元, 折合人民币`0.022`。
@@ -25,9 +39,12 @@
 ![screenshot1](screenshot/img1.png "screenshot1")
 ![screenshot2](screenshot/img2.png "screenshot2")
 ![screenshot3](screenshot/img3.png "screenshot3")
+</details>
 
+<hr>
 
-## 配置文件
+<details>
+<summary>配置文件</summary>
 配置文件conf.yml会和可执行程序打包在一起，默认的配置文件无法运行，需要修改以下两项配置，其他配置不用修改。
 
 `captchaApiKey`: 验证码识别服务的API密钥
@@ -57,15 +74,20 @@ captchaApiKey配置项，注册[2captcha](https://cn.2captcha.com/)成功后，�
 ![screenshot5](screenshot/img5.png "screenshot5")
 
 以上配置只配置了一个账号密码，按yml配置文件规范，注意不要漏掉配置项冒号后面的空格, 如username:` username`
+</details>
 
-## 使用说明
+<hr>
+
+<details>
+<summary>使用说明</summary>
 不支持开通二次验证的账号，如Google Auth验证器或邮箱验证
 
 下载[https://github.com/zJiaJun/warmane/releases/](https://github.com/zJiaJun/warmane/releases/)最新的release
 包，根据自己的操作系统选择，这里以windows_x86_64.zip为例子说明
 * 下载并解压，这里的目录是`D:\Download\warmane_0.1.1_Windows_x86_64`
-![screenshot6](screenshot/img6.png "screenshot6")
+  ![screenshot6](screenshot/img6.png "screenshot6")
 * 修改解压出来的conf.yml配置文件
 * 打开windows的控制台程序，进入到下载解压的目录 `cd D:\Download\warmane_0.1.1_Windows_x86_64\`
 * 运行程序`.\warmane_0.1.1.exe --logtostderr=true`，等待程序运行结束
-![screenshot7](screenshot/img7.png "screenshot7")
+  ![screenshot7](screenshot/img7.png "screenshot7")
+</details>
