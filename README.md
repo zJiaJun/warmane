@@ -3,26 +3,28 @@
 ## 这是什么
 关于[Warmane](https://www.warmane.com/)网站的一些自动化操作和数据爬取分析功能
 
-## 后续计划
+## 开发计划
 + [x] 自动登录
 + [x] 验证码识别
 + [x] 自动Points签到
 + [x] 多账户支持
-+ [ ] 商城人物数据爬去
++ [ ] 商城人物数据爬取
 + [ ] 人物数据分析并存储
 + [ ] 多维度查询
 
+## 说明文档
 <details>
 <summary>使用的技术</summary>
-* go language
-* [colly](https://github.com/gocolly/colly/): 轻量和优雅的爬虫框架
-* [2captcha-go](https://github.com/2captcha/2captcha-go): 验证码识别服务SDK
+
+  * go language
+  * [colly](https://github.com/gocolly/colly/): 轻量和优雅的爬虫框架
+  * [2captcha-go](https://github.com/2captcha/2captcha-go): 验证码识别服务SDK
 </details>
 
-<hr>
 
 <details>
 <summary>验证码服务说明</summary>
+
 自动登录的验证码识别是由[2captcha](https://cn.2captcha.com/)提供的，是一个收费服务，简单来说就是打码平台，支持验证码类型比国内的同类型平台多很多，单次验证价格比国内的也便宜少许。
 
 验证识别recaptchav2类型(warmane网站使用)的验证码费用是一次`0.00299`美元, 折合人民币`0.022`。
@@ -41,15 +43,15 @@
 ![screenshot3](screenshot/img3.png "screenshot3")
 </details>
 
-<hr>
 
 <details>
 <summary>配置文件</summary>
-配置文件conf.yml会和可执行程序打包在一起，默认的配置文件无法运行，需要修改以下两项配置，其他配置不用修改。
 
-`captchaApiKey`: 验证码识别服务的API密钥
+配置文件`conf.yml`会和可执行程序打包在一起,默认的配置文件无法运行,需要修改以下两项配置,其他配置不用修改
 
-`accounts`: 登录warmane网站的账号和密码,可配置多个
+`captchaApiKey`: 验证码识别服务的API密钥  
+
+`accounts`: 登录warmane网站的账号和密码,可配置多个  
 
 默认配置：
 ```yaml
@@ -73,16 +75,16 @@ captchaApiKey配置项，注册[2captcha](https://cn.2captcha.com/)成功后，�
 ![screenshot4](screenshot/img4.png "screenshot4")
 ![screenshot5](screenshot/img5.png "screenshot5")
 
-以上配置只配置了一个账号密码，按yml配置文件规范，注意不要漏掉配置项冒号后面的空格, 如username:` username`
+以上配置只配置了一个账号密码，按yml配置文件规范，注意不要漏掉配置项冒号后面的空格  
+如username:` username`
 </details>
 
-<hr>
 
 <details>
 <summary>使用说明</summary>
-不支持开通二次验证的账号，如Google Auth验证器或邮箱验证
 
-下载[https://github.com/zJiaJun/warmane/releases/](https://github.com/zJiaJun/warmane/releases/)最新的release
+* 不支持开通二次验证的账号，Google Auth验证器或邮箱验证
+* 下载[https://github.com/zJiaJun/warmane/releases/](https://github.com/zJiaJun/warmane/releases/)最新的release
 包，根据自己的操作系统选择，这里以windows_x86_64.zip为例子说明
 * 下载并解压，这里的目录是`D:\Download\warmane_0.1.1_Windows_x86_64`
   ![screenshot6](screenshot/img6.png "screenshot6")
