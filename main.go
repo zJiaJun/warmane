@@ -4,42 +4,18 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
-	"errors"
 	"flag"
 	"github.com/andybalholm/brotli"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/extensions"
 	"github.com/golang/glog"
 	"github.com/klauspost/compress/flate"
-	"gitub.com/zJiajun/warmane/captcha"
-	"gopkg.in/yaml.v3"
+	"gitub.com/zJiajun/warmane/internal/captcha"
+	"gitub.com/zJiajun/warmane/internal/config"
+	"gitub.com/zJiajun/warmane/internal/errors"
 	"io"
-	"os"
 	"sync"
 	"time"
-)
-
-type (
-	Config struct {
-		Url struct {
-			Base    string `yaml:"base"`
-			Account string `yaml:"account"`
-			Login   string `yaml:"login"`
-			Logout  string `yaml:"logout"`
-		}
-		Selector struct {
-			CsrfToken string `yaml:"csrfToken"`
-			Coins     string `yaml:"coins"`
-			Points    string `yaml:"points"`
-		}
-		CaptchaApiKey  string    `yaml:"captchaApiKey"`
-		WarmaneSiteKey string    `yaml:"warmaneSiteKey"`
-		Accounts       []Account `yaml:"accounts"`
-	}
-	Account struct {
-		Username string `yaml:"username"`
-		Password string `yaml:"password"`
-	}
 )
 
 type BodyMsg struct {
@@ -51,46 +27,31 @@ type BodyMsg struct {
 }
 
 var (
-	conf            Config
-	bodyMsg         BodyMsg
-	wg              sync.WaitGroup
-	csrfTokenError  = errors.New("查询获取csrfToken错误")
-	confNotFound    = errors.New("配置文件[config.yml]未找到, 请把配置文件放到程序同一目录下")
-	confDecodeError = errors.New("配置文件[config.yml]解析错误, 请检查配置文件")
+	bodyMsg BodyMsg
+	wg      sync.WaitGroup
 )
 
 const (
 	/*
-			{"messages":{"error":["Incorrect account name or password."]}}
-			{"messages":{"error":["You have already collected your points today."]}}
-		 	{"messages":{"error":["You have not logged in-game today."]}}
+			{"messages":{"errors":["Incorrect account name or password."]}}
+			{"messages":{"errors":["You have already collected your points today."]}}
+		 	{"messages":{"errors":["You have not logged in-game today."]}}
 			{"messages":{"success":["Daily points collected."]},"points":[10.4]}
 	*/
 	loginSuccessBody = "{\"redirect\":[\"\\/account\"]}"
 )
 
 func init() {
+	_ = flag.Set("log_dir", "./")
 	flag.Parse()
-}
-
-func loadConf() error {
-	file, err := os.ReadFile("conf.yml")
-	if err != nil {
-		return confNotFound
-	}
-	err = yaml.Unmarshal(file, &conf)
-	if err != nil {
-		return confDecodeError
-	}
-	return nil
 }
 
 func main() {
 	glog.Info("开始运行自动签到功能")
 	defer glog.Flush()
-	err := loadConf()
+	conf, err := config.LoadConf()
 	if err != nil {
-		handleError(err)
+		errors.HandleError(err)
 		return
 	}
 	count := len(conf.Accounts)
@@ -98,28 +59,12 @@ func main() {
 	wg.Add(count)
 	glog.Infof("开始goroutine并发处理")
 	for _, account := range conf.Accounts {
-		go loginAndCollect(account)
+		go loginAndCollect(conf, account)
 	}
 	wg.Wait()
 }
 
-func handleError(err error) {
-	if err == nil {
-		return
-	}
-	switch {
-	case errors.Is(err, confNotFound):
-		glog.Error(err.Error())
-	case errors.Is(err, confDecodeError):
-		glog.Error(err.Error())
-	case errors.Is(err, csrfTokenError):
-		glog.Error(err.Error())
-	default:
-		glog.Error(err.Error())
-	}
-}
-
-func loginAndCollect(account Account) {
+func loginAndCollect(conf *config.Config, account config.Account) {
 	defer wg.Done()
 	c := colly.NewCollector()
 	//允许重复访问URL
@@ -130,7 +75,7 @@ func loginAndCollect(account Account) {
 
 	csrfToken, err := queryCsrfToken(c)
 	if err != nil {
-		handleError(err)
+		errors.HandleError(err)
 		return
 	}
 
@@ -140,21 +85,17 @@ func loginAndCollect(account Account) {
 	loginData["userID"] = account.Username
 	loginData["userPW"] = account.Password
 
-	capt := captcha.Captcha{
-		CaptchaApiKey:  conf.CaptchaApiKey,
-		WarmaneSiteKey: conf.WarmaneSiteKey,
-		LoginUrl:       conf.Url.Login,
-	}
+	capt := captcha.New(conf)
 	code, err := capt.HandleCaptcha()
 	if err != nil {
-		handleError(err)
+		errors.HandleError(err)
 		return
 	}
 	loginData["g-recaptcha-response"] = code
 
 	requestCallback := func(request *colly.Request) {
-		request.Headers.Set("Origin", conf.Url.Base)
-		request.Headers.Set("Referer", conf.Url.Login)
+		request.Headers.Set("Origin", config.BaseUrl)
+		request.Headers.Set("Referer", config.LoginUrl)
 		request.Headers.Set("Accept", "application/json, text/javascript, */*; q=0.01")
 		request.Headers.Set("Accept-Encoding", "gzip, deflate, br")
 		request.Headers.Set("X-Csrf-Token", csrfToken)
@@ -173,7 +114,7 @@ func loginAndCollect(account Account) {
 		//需要将解码后的body赋值回去, 否则下面的onHTML无法解析selector
 		response.Body = respBytes
 		glog.Infof("解码[%s]返回内容成功, 状态码:[%d], 大小[%d]", response.Request.URL, response.StatusCode, len(respBytes))
-		if conf.Url.Login == response.Request.URL.String() && response.Request.Method == "POST" {
+		if config.LoginUrl == response.Request.URL.String() && response.Request.Method == "POST" {
 			bodyText := string(response.Body)
 			if bodyText == loginSuccessBody {
 				loginSuccess = true
@@ -192,7 +133,7 @@ func loginAndCollect(account Account) {
 				}
 			}
 		}
-		if conf.Url.Account == response.Request.URL.String() && response.Request.Method == "POST" {
+		if config.AccountUrl == response.Request.URL.String() && response.Request.Method == "POST" {
 			bodyText := string(response.Body)
 			err := json.Unmarshal(response.Body, &bodyMsg)
 			if err != nil {
@@ -213,7 +154,7 @@ func loginAndCollect(account Account) {
 	}
 	c.OnResponse(responseCallback)
 
-	loginErr := c.Post(conf.Url.Login, loginData)
+	loginErr := c.Post(config.LoginUrl, loginData)
 	if loginErr != nil {
 		glog.Errorf("账号[%s]登录错误: %v", account.Username, loginErr)
 		return
@@ -221,13 +162,13 @@ func loginAndCollect(account Account) {
 	if loginSuccess {
 		coins := ""
 		points := ""
-		c.OnHTML(conf.Selector.Coins, func(element *colly.HTMLElement) {
+		c.OnHTML(config.CoinsSelector, func(element *colly.HTMLElement) {
 			coins = element.Text
 		})
-		c.OnHTML(conf.Selector.Points, func(element *colly.HTMLElement) {
+		c.OnHTML(config.PointsSelector, func(element *colly.HTMLElement) {
 			points = element.Text
 		})
-		accErr := c.Visit(conf.Url.Account)
+		accErr := c.Visit(config.AccountUrl)
 		if accErr != nil {
 			glog.Errorf("账号[%s]访问账号页面错误: %v", account.Username, accErr)
 			return
@@ -237,19 +178,19 @@ func loginAndCollect(account Account) {
 		collectPointsData := map[string]string{
 			"collectpoints": "true",
 		}
-		accErr = c.Post(conf.Url.Account, collectPointsData)
+		accErr = c.Post(config.AccountUrl, collectPointsData)
 		if accErr != nil {
 			glog.Errorf("账号[%s]收集签到点错误: %v", account.Username, accErr)
 			return
 		}
-		accErr = c.Visit(conf.Url.Account)
+		accErr = c.Visit(config.AccountUrl)
 		if accErr != nil {
 			glog.Errorf("账号[%s]访问账号页面错误: %v", account.Username, accErr)
 			return
 		}
 		glog.Infof("账号[%s]收集签到点[后]的 coins: [%s]", account.Username, coins)
 		glog.Infof("账号[%s]收集签到点[后]的 points: [%s]", account.Username, points)
-		accErr = c.Visit(conf.Url.Logout)
+		accErr = c.Visit(config.LogoutUrl)
 		if accErr != nil {
 			glog.Errorf("账号[%s]退出错误: %v", account.Username, accErr)
 			return
@@ -263,14 +204,14 @@ func queryCsrfToken(c *colly.Collector) (string, error) {
 	csrfTokenCallback := func(element *colly.HTMLElement) {
 		csrfToken = element.Attr("content")
 	}
-	c.OnHTML(conf.Selector.CsrfToken, csrfTokenCallback)
-	err := c.Visit(conf.Url.Login)
+	c.OnHTML(config.CsrfTokenSelector, csrfTokenCallback)
+	err := c.Visit(config.LoginUrl)
 	if err != nil {
-		return "", csrfTokenError
+		return "", errors.ErrCsrfToken
 	}
-	c.OnHTMLDetach(conf.Selector.CsrfToken)
+	c.OnHTMLDetach(config.CsrfTokenSelector)
 	if csrfToken == "" {
-		return "", csrfTokenError
+		return "", errors.ErrCsrfToken
 	}
 	glog.Infof("查询获取warmane网站的csrfToken成功: %s", csrfToken)
 	return csrfToken, nil

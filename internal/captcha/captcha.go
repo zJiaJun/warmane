@@ -4,29 +4,39 @@ import (
 	"fmt"
 	api2captcha "github.com/2captcha/2captcha-go"
 	"github.com/golang/glog"
+	"gitub.com/zJiajun/warmane/internal/config"
 	"time"
 )
 
 type Captcha struct {
-	CaptchaApiKey  string
-	WarmaneSiteKey string
-	LoginUrl       string
+	captchaApiKey  string
+	warmaneSiteKey string
+	loginUrl       string
+}
+
+func New(conf *config.Config) *Captcha {
+	return &Captcha{
+		captchaApiKey:  conf.CaptchaApiKey,
+		warmaneSiteKey: conf.WarmaneSiteKey,
+		loginUrl:       config.LoginUrl,
+	}
 }
 
 func (c *Captcha) HandleCaptcha() (string, error) {
-	client := api2captcha.NewClient(c.CaptchaApiKey)
+	client := api2captcha.NewClient(c.captchaApiKey)
 	client.DefaultTimeout = 120
 	client.RecaptchaTimeout = 600
 	client.PollingInterval = 30
-	_, err := queryBalance(client)
-	if err != nil {
+	if _, err := queryBalance(client); err != nil {
 		return "", fmt.Errorf("验证码破解服务查询余额失败, %w", err)
 	}
-	code, err := solveCaptcha(client, c.WarmaneSiteKey, c.LoginUrl)
-	if err != nil {
-		return "", fmt.Errorf("验证码破解服务执行失败, %w", err)
-	}
-	return code, nil
+	/*
+		code, err := solveCaptcha(client, c.warmaneSiteKey, c.loginUrl)
+		if err != nil {
+			return "", fmt.Errorf("验证码破解服务执行失败, %w", err)
+		}
+	*/
+	return "code", nil
 }
 
 func queryBalance(client *api2captcha.Client) (float64, error) {

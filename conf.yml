@@ -1,17 +1,6 @@
-url:
-  base: https://www.warmane.com
-  account: https://www.warmane.com/account
-  login: https://www.warmane.com/account/login
-  logout: https://www.warmane.com/account/logout
-
 captchaApiKey: 2captcha_api_key
 # set https://cn.2captcha.com/2captcha-api#solving_recaptchav2_new
 warmaneSiteKey: 6LfXRRsUAAAAAEApnVwrtQ7aFprn4naEcc05AZUR
-
-selector:
-    csrfToken: meta[name='csrf-token']
-    coins: .myCoins
-    points: .myPoints
 
 accounts:
   - username: your-username

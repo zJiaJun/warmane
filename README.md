@@ -86,6 +86,6 @@ captchaApiKey配置项，注册[2captcha](https://cn.2captcha.com/)成功后，�
   ![screenshot6](screenshot/img6.png "screenshot6")
 * 修改解压出来的conf.yml配置文件
 * 打开windows的控制台程序，进入到下载解压的目录 `cd D:\Download\warmane_0.1.1_Windows_x86_64\`
-* 运行程序`.\warmane_0.1.1.exe --logtostderr=true`，等待程序运行结束
+* 运行程序`.\warmane_0.1.1.exe ---alsologtostderr=true`，等待程序运行结束
   ![screenshot7](screenshot/img7.png "screenshot7")
 </p></details>
