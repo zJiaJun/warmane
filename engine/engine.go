@@ -2,7 +2,6 @@ package engine
 
 import (
 	"encoding/json"
-	"flag"
 	"github.com/gocolly/colly/v2"
 	"github.com/golang/glog"
 	"gitub.com/zJiajun/warmane/internal/captcha"
@@ -28,11 +27,6 @@ const (
 	*/
 	loginSuccessBody = "{\"redirect\":[\"\\/account\"]}"
 )
-
-func init() {
-	_ = flag.Set("log_dir", "./")
-	flag.Parse()
-}
 
 type Engine struct {
 	config    *config.Config
