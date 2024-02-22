@@ -33,7 +33,7 @@ type (
 var conf Config
 
 func LoadConf() (*Config, error) {
-	file, err := os.ReadFile("conf.yml")
+	file, err := os.ReadFile("config.yml")
 	if err != nil {
 		return nil, errors.ErrConfNotFound
 	}

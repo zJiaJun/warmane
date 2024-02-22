@@ -56,7 +56,7 @@ func (e *Engine) RunDailyPoints() {
 	glog.Info("开始运行自动签到功能")
 	defer glog.Flush()
 	count := len(e.config.Accounts)
-	glog.Infof("加载配置文件[conf.yml]成功, 需要签到的账号数量是[%d]", count)
+	glog.Infof("加载配置文件[config.yml]成功, 需要签到的账号数量是[%d]", count)
 	e.wg.Add(count)
 	glog.Infof("开始goroutine并发处理")
 	for _, account := range e.config.Accounts {
@@ -68,13 +68,16 @@ func (e *Engine) RunDailyPoints() {
 func (e *Engine) loginAndCollect(account config.Account) {
 	defer e.wg.Done()
 	if err := e.login(account); err != nil {
-		glog.Errorf("账号[%s]登录错误, %s", account.Username, err)
+		glog.Errorf("账号[%s]登录错误, 原因: %v", account.Username, err)
+		return
 	}
 	if err := e.collectPoints(account); err != nil {
-		glog.Errorf("账号[%s]自动收集签到点错误, 返回内容: %s", account.Username, err)
+		glog.Errorf("账号[%s]自动收集签到点错误, 原因: %v", account.Username, err)
+		return
 	}
 	if err := e.logout(account); err != nil {
-		glog.Errorf("账号[%s]退出错误: %v", account.Username, err)
+		glog.Errorf("账号[%s]退出错误, 原因: %v", account.Username, err)
+		return
 	}
 }
 

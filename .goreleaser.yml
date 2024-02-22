@@ -12,7 +12,7 @@ before:
 builds:
   - id: "warmane"
     binary: "warmane_{{ .Version }}"
-    main: ./cmd/main
+    main: main.go
     env:
       - CGO_ENABLED=0
     goos:
