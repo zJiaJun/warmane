@@ -77,11 +77,11 @@ func (e *Engine) loginAndCollect(account config.Account) {
 
 func (e *Engine) login(account config.Account) error {
 	c := e.scraper.CloneCollector()
-	csrfToken, err := getCsrfToken(c)
+	var err error
+	e.csrfToken, err = getCsrfToken(c)
 	if err != nil {
 		return err
 	}
-	e.csrfToken = csrfToken
 
 	loginData := make(map[string]string, 4)
 	loginData["return"] = ""

@@ -30,13 +30,12 @@ type (
 	}
 )
 
-var conf Config
-
 func LoadConf() (*Config, error) {
 	file, err := os.ReadFile("config.yml")
 	if err != nil {
 		return nil, errors.ErrConfNotFound
 	}
+	var conf Config
 	err = yaml.Unmarshal(file, &conf)
 	if err != nil {
 		return nil, errors.ErrConfDecodeError
