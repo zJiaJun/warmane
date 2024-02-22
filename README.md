@@ -35,10 +35,10 @@
 
 当然也可以不注册，使用此程序的API密钥，为了防止滥用，API密钥没有公开到github上，如需要可联系我。
 
-![screenshot0](screenshot/img1.png "screenshot0")
-![screenshot1](screenshot/img1.png "screenshot1")
-![screenshot2](screenshot/img2.png "screenshot2")
-![screenshot3](screenshot/img3.png "screenshot3")
+![screenshot0](docs/screenshot/img1.png "screenshot0")
+![screenshot1](docs/screenshot/img1.png "screenshot1")
+![screenshot2](docs/screenshot/img2.png "screenshot2")
+![screenshot3](docs/screenshot/img3.png "screenshot3")
 </p></details>
 
 
@@ -69,8 +69,8 @@ accounts:
     password: your-password
 ```
 captchaApiKey配置项，注册[2captcha](https://cn.2captcha.com/)成功后，切换到开发者，复制API密钥到配置文件中
-![screenshot4](screenshot/img4.png "screenshot4")
-![screenshot5](screenshot/img5.png "screenshot5")
+![screenshot4](docs/screenshot/img4.png "screenshot4")
+![screenshot5](docs/screenshot/img5.png "screenshot5")
 
 以上配置只配置了一个账号密码，按yml配置文件规范，注意不要漏掉配置项冒号后面的空格  
 如username:` username`
@@ -83,9 +83,9 @@ captchaApiKey配置项，注册[2captcha](https://cn.2captcha.com/)成功后，�
 * 下载[https://github.com/zJiaJun/warmane/releases/](https://github.com/zJiaJun/warmane/releases/)最新的release
 包，根据自己的操作系统选择，这里以windows_x86_64.zip为例子说明
 * 下载并解压，这里的目录是`D:\Download\warmane_0.1.1_Windows_x86_64`
-  ![screenshot6](screenshot/img6.png "screenshot6")
+  ![screenshot6](docs/screenshot/img6.png "screenshot6")
 * 修改解压出来的conf.yml配置文件
 * 打开windows的控制台程序，进入到下载解压的目录 `cd D:\Download\warmane_0.1.1_Windows_x86_64\`
 * 运行程序`.\warmane_0.1.1.exe ---alsologtostderr=true`，等待程序运行结束
-  ![screenshot7](screenshot/img7.png "screenshot7")
+  ![screenshot7](docs/screenshot/img7.png "screenshot7")
 </p></details>

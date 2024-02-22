@@ -4,7 +4,6 @@ import (
 	"fmt"
 	api2captcha "github.com/2captcha/2captcha-go"
 	"github.com/golang/glog"
-	"gitub.com/zJiajun/warmane/internal/config"
 	"time"
 )
 
@@ -14,14 +13,14 @@ type Captcha struct {
 	client  *api2captcha.Client
 }
 
-func NewCaptcha(captchaApiKey string, siteKey string) *Captcha {
+func NewCaptcha(captchaApiKey string, siteKey string, url string) *Captcha {
 	client := api2captcha.NewClient(captchaApiKey)
 	client.DefaultTimeout = 120
 	client.RecaptchaTimeout = 600
 	client.PollingInterval = 30
 	return &Captcha{
 		siteKey: siteKey,
-		url:     config.LoginUrl,
+		url:     url,
 		client:  client,
 	}
 }

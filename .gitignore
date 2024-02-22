@@ -28,3 +28,4 @@ vendor/
 
 
 dist/
+/logs
