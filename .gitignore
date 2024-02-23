@@ -15,6 +15,7 @@
 
 build/
 /warmane
+dev_config.yml
 
 .ropeproject/
 vendor/

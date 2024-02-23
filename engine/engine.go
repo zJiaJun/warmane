@@ -7,6 +7,7 @@ import (
 	"gitub.com/zJiajun/warmane/internal/captcha"
 	"gitub.com/zJiajun/warmane/internal/config"
 	"gitub.com/zJiajun/warmane/internal/scraper"
+	"os"
 	"sync"
 )
 
@@ -69,13 +70,19 @@ func (e *Engine) loginAndCollect(account config.Account) {
 		glog.Errorf("账号[%s]自动收集签到点错误, 原因: %v", account.Username, err)
 		return
 	}
-	if err := e.logout(account); err != nil {
-		glog.Errorf("账号[%s]退出错误, 原因: %v", account.Username, err)
-		return
-	}
+	/*
+		if err := e.logout(account); err != nil {
+			glog.Errorf("账号[%s]退出错误, 原因: %v", account.Username, err)
+			return
+		}
+	*/
 }
 
 func (e *Engine) login(account config.Account) error {
+	if e.existCookiesFile() {
+		glog.Infof("存在cookies文件,跳过登录")
+		return nil
+	}
 	c := e.scraper.CloneCollector()
 	var err error
 	e.csrfToken, err = getCsrfToken(c)
@@ -83,17 +90,18 @@ func (e *Engine) login(account config.Account) error {
 		return err
 	}
 
-	loginData := make(map[string]string, 4)
-	loginData["return"] = ""
-	loginData["userID"] = account.Username
-	loginData["userPW"] = account.Password
-
 	capt := captcha.NewCaptcha(e.config.CaptchaApiKey, e.config.WarmaneSiteKey, config.LoginUrl)
 	code, err := capt.HandleCaptcha()
 	if err != nil {
 		return err
 	}
-	loginData["g-recaptcha-response"] = code
+	loginData := map[string]string{
+		"return":               "",
+		"userID":               account.Username,
+		"userPW":               account.Password,
+		"g-recaptcha-response": code,
+		"userRM":               "on",
+	}
 	e.scraper.SetRequestHeaders(c, e.csrfToken)
 	e.scraper.DecodeResponse(c)
 	var bodyMsg BodyMsg
@@ -117,6 +125,14 @@ func (e *Engine) login(account config.Account) error {
 	})
 	err = c.Post(config.LoginUrl, loginData)
 	return err
+}
+
+func (e *Engine) existCookiesFile() bool {
+	_, err := os.Stat("www.warmane.com.cookies")
+	if os.IsNotExist(err) {
+		return false
+	}
+	return true
 }
 
 func (e *Engine) collectPoints(account config.Account) error {
@@ -149,9 +165,7 @@ func (e *Engine) collectPoints(account config.Account) error {
 			glog.Infof("账号[%s]自动收集签到点失败, 返回内容: %s", account.Username, bodyText)
 		}
 	})
-	collectPointsData := map[string]string{
-		"collectpoints": "true",
-	}
+	collectPointsData := map[string]string{"collectpoints": "true"}
 	err = c.Post(config.AccountUrl, collectPointsData)
 	if err != nil {
 		return err

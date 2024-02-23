@@ -1,7 +1,9 @@
 package storage
 
 import (
+	"fmt"
 	"github.com/gocolly/colly/v2/storage"
+	"github.com/golang/glog"
 	"log"
 	"net/url"
 	"os"
@@ -32,7 +34,9 @@ func (ds *DiskStorage) IsVisited(requestID uint64) (bool, error) {
 }
 
 func (ds *DiskStorage) Cookies(u *url.URL) string {
-	buf, err := os.ReadFile(ds.fileName)
+	glog.Infof("disk storage run cookies, %v", u)
+	filePath := fmt.Sprintf("%s"+ds.fileName, u.Hostname())
+	buf, err := os.ReadFile(filePath)
 	if err != nil {
 		return ""
 	}
@@ -40,7 +44,9 @@ func (ds *DiskStorage) Cookies(u *url.URL) string {
 }
 
 func (ds *DiskStorage) SetCookies(u *url.URL, cookies string) {
-	if err := os.WriteFile(ds.fileName, []byte(cookies), 0644); err != nil {
+	glog.Infof("disk storage run SetCookies, %v, %s", u, cookies)
+	filePath := fmt.Sprintf("%s"+ds.fileName, u.Hostname())
+	if err := os.WriteFile(filePath, []byte(cookies), 0644); err != nil {
 		log.Fatal(err)
 	}
 }
