@@ -2,6 +2,7 @@ package engine
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gocolly/colly/v2"
 	"github.com/golang/glog"
 	"gitub.com/zJiajun/warmane/internal/captcha"
@@ -31,7 +32,7 @@ const (
 
 type Engine struct {
 	config    *config.Config
-	scraper   *scraper.Scraper
+	scrapers  map[string]*scraper.Scraper
 	wg        sync.WaitGroup
 	csrfToken string
 }
@@ -42,8 +43,8 @@ func New() *Engine {
 		panic(err)
 	}
 	return &Engine{
-		config:  conf,
-		scraper: scraper.NewScraper(),
+		config:   conf,
+		scrapers: make(map[string]*scraper.Scraper, len(conf.Accounts)),
 	}
 }
 
@@ -55,9 +56,18 @@ func (e *Engine) RunDailyPoints() {
 	e.wg.Add(count)
 	glog.Infof("开始goroutine并发处理")
 	for _, account := range e.config.Accounts {
+		e.setScraper(account)
 		go e.loginAndCollect(account)
 	}
 	e.wg.Wait()
+}
+
+func (e *Engine) setScraper(account config.Account) {
+	e.scrapers[account.Username] = scraper.NewScraper(account.Username)
+}
+
+func (e *Engine) scraper(account config.Account) *scraper.Scraper {
+	return e.scrapers[account.Username]
 }
 
 func (e *Engine) loginAndCollect(account config.Account) {
@@ -79,11 +89,11 @@ func (e *Engine) loginAndCollect(account config.Account) {
 }
 
 func (e *Engine) login(account config.Account) error {
-	if e.existCookiesFile() {
-		glog.Infof("存在cookies文件,跳过登录")
+	if e.existCookiesFile(account) {
+		glog.Infof("存在[%s]cookies文件,跳过登录", account.Username)
 		return nil
 	}
-	c := e.scraper.CloneCollector()
+	c := e.scraper(account).CloneCollector()
 	var err error
 	e.csrfToken, err = getCsrfToken(c)
 	if err != nil {
@@ -102,8 +112,8 @@ func (e *Engine) login(account config.Account) error {
 		"g-recaptcha-response": code,
 		"userRM":               "on",
 	}
-	e.scraper.SetRequestHeaders(c, e.csrfToken)
-	e.scraper.DecodeResponse(c)
+	e.scraper(account).SetRequestHeaders(c, e.csrfToken)
+	e.scraper(account).DecodeResponse(c)
 	var bodyMsg BodyMsg
 	c.OnResponse(func(response *colly.Response) {
 		bodyText := string(response.Body)
@@ -127,8 +137,9 @@ func (e *Engine) login(account config.Account) error {
 	return err
 }
 
-func (e *Engine) existCookiesFile() bool {
-	_, err := os.Stat("www.warmane.com.cookies")
+func (e *Engine) existCookiesFile(account config.Account) bool {
+	cookiesFile := fmt.Sprintf("www.warmane.com.%s.cookies", account.Username)
+	_, err := os.Stat(cookiesFile)
 	if os.IsNotExist(err) {
 		return false
 	}
@@ -136,16 +147,16 @@ func (e *Engine) existCookiesFile() bool {
 }
 
 func (e *Engine) collectPoints(account config.Account) error {
-	beforeCoins, beforePoints, err := e.getInfo()
+	beforeCoins, beforePoints, err := e.getInfo(account)
 	if err != nil {
 		return err
 	}
 	glog.Infof("账号[%s]收集签到点[前]的 coins: [%s], points: [%s]",
 		account.Username, beforeCoins, beforePoints)
 
-	c := e.scraper.CloneCollector()
-	e.scraper.SetRequestHeaders(c, e.csrfToken)
-	e.scraper.DecodeResponse(c)
+	c := e.scraper(account).CloneCollector()
+	e.scraper(account).SetRequestHeaders(c, e.csrfToken)
+	e.scraper(account).DecodeResponse(c)
 	var bodyMsg BodyMsg
 	c.OnResponse(func(response *colly.Response) {
 		bodyText := string(response.Body)
@@ -170,7 +181,7 @@ func (e *Engine) collectPoints(account config.Account) error {
 	if err != nil {
 		return err
 	}
-	afterCoins, afterPoints, err := e.getInfo()
+	afterCoins, afterPoints, err := e.getInfo(account)
 	if err != nil {
 		return err
 	}
@@ -180,7 +191,7 @@ func (e *Engine) collectPoints(account config.Account) error {
 }
 
 func (e *Engine) logout(account config.Account) error {
-	c := e.scraper.CloneCollector()
+	c := e.scraper(account).CloneCollector()
 	err := c.Visit(config.LogoutUrl)
 	if err != nil {
 		return err
@@ -189,10 +200,10 @@ func (e *Engine) logout(account config.Account) error {
 	return err
 }
 
-func (e *Engine) getInfo() (coins string, points string, err error) {
-	c := e.scraper.CloneCollector()
-	e.scraper.SetRequestHeaders(c, e.csrfToken)
-	e.scraper.DecodeResponse(c)
+func (e *Engine) getInfo(account config.Account) (coins string, points string, err error) {
+	c := e.scraper(account).CloneCollector()
+	e.scraper(account).SetRequestHeaders(c, e.csrfToken)
+	e.scraper(account).DecodeResponse(c)
 	c.OnHTML(config.CoinsSelector, func(element *colly.HTMLElement) {
 		coins = element.Text
 	})

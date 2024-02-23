@@ -13,7 +13,7 @@ type Scraper struct {
 	c *colly.Collector
 }
 
-func NewScraper() *Scraper {
+func NewScraper(name string) *Scraper {
 	s := &Scraper{
 		c: colly.NewCollector(
 			colly.AllowURLRevisit(),
@@ -22,7 +22,7 @@ func NewScraper() *Scraper {
 		),
 	}
 	s.c.SetRequestTimeout(600 * time.Second)
-	if err := s.c.SetStorage(storage.NewDiskStorage()); err != nil {
+	if err := s.c.SetStorage(storage.NewDiskStorage(name)); err != nil {
 		panic(err)
 	}
 	return s
@@ -45,7 +45,7 @@ func (s *Scraper) SetRequestHeaders(c *colly.Collector, csrfToken string) {
 
 func (s *Scraper) DecodeResponse(c *colly.Collector) {
 	c.OnResponse(func(response *colly.Response) {
-		glog.Infof("onResponse [%s], statusCode:[%d], size:[%d]", response.Request.URL, response.StatusCode, len(response.Body))
+		//glog.Infof("onResponse [%s], statusCode:[%d], size:[%d]", response.Request.URL, response.StatusCode, len(response.Body))
 		encoding := response.Headers.Get("Content-Encoding")
 		if encoding == "" {
 			return
@@ -56,7 +56,7 @@ func (s *Scraper) DecodeResponse(c *colly.Collector) {
 			return
 		}
 		response.Body = decodeResp
-		glog.Infof("onResponse decode [%s] response success", response.Request.URL)
+		//glog.Infof("onResponse decode [%s] response success", response.Request.URL)
 	})
 }
 
