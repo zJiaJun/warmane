@@ -1,7 +1,7 @@
 package config
 
 import (
-	"gitub.com/zJiajun/warmane/internal/errors"
+	"gitub.com/zJiajun/warmane/errors"
 	"gopkg.in/yaml.v3"
 	"os"
 )
@@ -10,6 +10,7 @@ const (
 	BaseUrl    = "https://www.warmane.com"
 	AccountUrl = BaseUrl + "/account"
 	LoginUrl   = AccountUrl + "/login"
+	TradeUrl   = AccountUrl + "/trade"
 	LogoutUrl  = AccountUrl + "/logout"
 )
 const (
@@ -31,7 +32,8 @@ type (
 )
 
 func LoadConf() (*Config, error) {
-	file, err := os.ReadFile("config.yml")
+	//file, err := os.ReadFile("config.yml")
+	file, err := os.ReadFile("dev_config.yml")
 	if err != nil {
 		return nil, errors.ErrConfNotFound
 	}

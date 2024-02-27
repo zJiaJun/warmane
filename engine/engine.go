@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"github.com/gocolly/colly/v2"
 	"github.com/golang/glog"
-	"gitub.com/zJiajun/warmane/internal/captcha"
-	"gitub.com/zJiajun/warmane/internal/config"
-	"gitub.com/zJiajun/warmane/internal/scraper"
+	"gitub.com/zJiajun/warmane/captcha"
+	"gitub.com/zJiajun/warmane/config"
+	"gitub.com/zJiajun/warmane/scraper"
 	"os"
 	"sync"
 )
@@ -57,7 +57,7 @@ func (e *Engine) RunDailyPoints() {
 	glog.Infof("开始goroutine并发处理")
 	for _, account := range e.config.Accounts {
 		e.setScraper(account)
-		go e.loginAndCollect(account)
+		go e.collect(account)
 	}
 	e.wg.Wait()
 }
@@ -70,7 +70,7 @@ func (e *Engine) scraper(account config.Account) *scraper.Scraper {
 	return e.scrapers[account.Username]
 }
 
-func (e *Engine) loginAndCollect(account config.Account) {
+func (e *Engine) collect(account config.Account) {
 	defer e.wg.Done()
 	if err := e.login(account); err != nil {
 		glog.Errorf("账号[%s]登录错误, 原因: %v", account.Username, err)
@@ -80,6 +80,12 @@ func (e *Engine) loginAndCollect(account config.Account) {
 		glog.Errorf("账号[%s]自动收集签到点错误, 原因: %v", account.Username, err)
 		return
 	}
+	/*
+		if err := e.trade(account); err != nil {
+			glog.Errorf("账号[%s]查询商场数据错误, 原因: %v", account.Username, err)
+			return
+		}
+	*/
 	/*
 		if err := e.logout(account); err != nil {
 			glog.Errorf("账号[%s]退出错误, 原因: %v", account.Username, err)
@@ -187,6 +193,16 @@ func (e *Engine) collectPoints(account config.Account) error {
 	}
 	glog.Infof("账号[%s]收集签到点[后]的 coins: [%s], points: [%s]",
 		account.Username, afterCoins, afterPoints)
+	return err
+}
+
+func (e *Engine) trade(account config.Account) error {
+	c := e.scraper(account).CloneCollector()
+	c.OnResponse(func(response *colly.Response) {
+		respBody := response.Body
+		glog.Infof(string(respBody))
+	})
+	err := c.Visit(config.TradeUrl)
 	return err
 }
 
