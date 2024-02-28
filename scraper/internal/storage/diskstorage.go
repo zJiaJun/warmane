@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"fmt"
 	"github.com/gocolly/colly/v2/storage"
+	"gitub.com/zJiajun/warmane/constant"
 	"log"
 	"net/url"
 	"os"
@@ -15,7 +15,7 @@ type DiskStorage struct {
 
 func NewDiskStorage(name string) *DiskStorage {
 	return &DiskStorage{
-		fileName:        "." + name + ".cookies",
+		fileName:        constant.CookieFileName(name),
 		inMemoryStorage: &storage.InMemoryStorage{},
 	}
 }
@@ -34,8 +34,7 @@ func (ds *DiskStorage) IsVisited(requestID uint64) (bool, error) {
 
 func (ds *DiskStorage) Cookies(u *url.URL) string {
 	//glog.Infof("disk storage run cookies, %v", u)
-	filePath := fmt.Sprintf("%s"+ds.fileName, u.Hostname())
-	buf, err := os.ReadFile(filePath)
+	buf, err := os.ReadFile(ds.fileName)
 	if err != nil {
 		return ""
 	}
@@ -44,8 +43,7 @@ func (ds *DiskStorage) Cookies(u *url.URL) string {
 
 func (ds *DiskStorage) SetCookies(u *url.URL, cookies string) {
 	//glog.Infof("disk storage run SetCookies, %v, %s", u, cookies)
-	filePath := fmt.Sprintf("%s"+ds.fileName, u.Hostname())
-	if err := os.WriteFile(filePath, []byte(cookies), 0644); err != nil {
+	if err := os.WriteFile(ds.fileName, []byte(cookies), 0644); err != nil {
 		log.Fatal(err)
 	}
 }

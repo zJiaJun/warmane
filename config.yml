@@ -2,6 +2,8 @@ captchaApiKey: 2captcha_api_key_is_here
 # set https://cn.2captcha.com/2captcha-api#solving_recaptchav2_new
 warmaneSiteKey: 6LfXRRsUAAAAAEApnVwrtQ7aFprn4naEcc05AZUR
 
+useCookiesLogin: true
+
 accounts:
   - username: your-username
     password: your-password

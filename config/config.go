@@ -6,24 +6,12 @@ import (
 	"os"
 )
 
-const (
-	BaseUrl    = "https://www.warmane.com"
-	AccountUrl = BaseUrl + "/account"
-	LoginUrl   = AccountUrl + "/login"
-	TradeUrl   = AccountUrl + "/trade"
-	LogoutUrl  = AccountUrl + "/logout"
-)
-const (
-	CsrfTokenSelector = "meta[name='csrf-token']"
-	CoinsSelector     = ".myCoins"
-	PointsSelector    = ".myPoints"
-)
-
 type (
 	Config struct {
-		CaptchaApiKey  string    `yaml:"captchaApiKey"`
-		WarmaneSiteKey string    `yaml:"warmaneSiteKey"`
-		Accounts       []Account `yaml:"accounts"`
+		CaptchaApiKey   string    `yaml:"captchaApiKey"`
+		WarmaneSiteKey  string    `yaml:"warmaneSiteKey"`
+		UseCookiesLogin bool      `yaml:"useCookiesLogin"`
+		Accounts        []Account `yaml:"accounts"`
 	}
 	Account struct {
 		Username string `yaml:"username"`

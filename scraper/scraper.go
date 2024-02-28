@@ -3,7 +3,7 @@ package scraper
 import (
 	"github.com/gocolly/colly/v2"
 	"github.com/golang/glog"
-	"gitub.com/zJiajun/warmane/config"
+	"gitub.com/zJiajun/warmane/constant"
 	"gitub.com/zJiajun/warmane/scraper/internal/decode"
 	"gitub.com/zJiajun/warmane/scraper/internal/extensions"
 	"gitub.com/zJiajun/warmane/scraper/internal/storage"
@@ -14,7 +14,7 @@ type Scraper struct {
 	c *colly.Collector
 }
 
-func NewScraper(name string) *Scraper {
+func newScraper(name string) *Scraper {
 	s := &Scraper{
 		c: colly.NewCollector(
 			colly.AllowURLRevisit(),
@@ -36,9 +36,9 @@ func (s *Scraper) SetRequestHeaders(c *colly.Collector, csrfToken string) {
 		request.Headers.Set("Accept-Encoding", "gzip, deflate, br")
 		request.Headers.Set("Cache-Control", "no-cache")
 		request.Headers.Set("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
-		request.Headers.Set("Origin", config.BaseUrl)
+		request.Headers.Set("Origin", constant.BaseUrl)
 		request.Headers.Set("Pragma", "no-cache")
-		request.Headers.Set("Referer", config.LoginUrl)
+		request.Headers.Set("Referer", constant.LoginUrl)
 		if csrfToken != "" {
 			request.Headers.Set("X-Csrf-Token", csrfToken)
 		}
