@@ -19,9 +19,8 @@ type (
 	}
 )
 
-func LoadConf() (*Config, error) {
-	//file, err := os.ReadFile("config.yml")
-	file, err := os.ReadFile("dev_config.yml")
+func Load(cfg string) (*Config, error) {
+	file, err := os.ReadFile(cfg)
 	if err != nil {
 		return nil, errors.ErrConfNotFound
 	}

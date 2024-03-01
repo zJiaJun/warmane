@@ -11,7 +11,8 @@ import (
 )
 
 type Scraper struct {
-	c *colly.Collector
+	c         *colly.Collector
+	csrfToken string
 }
 
 func newScraper(name string) *Scraper {
@@ -29,7 +30,7 @@ func newScraper(name string) *Scraper {
 	return s
 }
 
-func (s *Scraper) SetRequestHeaders(c *colly.Collector, csrfToken string) {
+func (s *Scraper) SetRequestHeaders(c *colly.Collector) {
 	c.OnRequest(func(request *colly.Request) {
 		request.Headers.Set("Accept", "application/json, text/javascript, */*; q=0.01")
 		request.Headers.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7")
@@ -39,9 +40,15 @@ func (s *Scraper) SetRequestHeaders(c *colly.Collector, csrfToken string) {
 		request.Headers.Set("Origin", constant.BaseUrl)
 		request.Headers.Set("Pragma", "no-cache")
 		request.Headers.Set("Referer", constant.LoginUrl)
-		if csrfToken != "" {
-			request.Headers.Set("X-Csrf-Token", csrfToken)
+		if s.csrfToken == "" {
+			e := c.Clone()
+			e.OnHTML(constant.CsrfTokenSelector, func(element *colly.HTMLElement) {
+				s.csrfToken = element.Attr("content")
+				glog.Infof("查询获取warmane网站的csrfToken成功: %s", s.csrfToken)
+			})
+			_ = e.Visit(constant.LoginUrl)
 		}
+		request.Headers.Set("X-Csrf-Token", s.csrfToken)
 		request.Headers.Set("X-Requested-With", "XMLHttpRequest")
 	})
 }
