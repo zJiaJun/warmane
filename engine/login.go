@@ -15,8 +15,8 @@ import (
 
 func (e *Engine) login(account config.Account) error {
 	name := account.Username
+	cookiesFile := constant.CookieFileName(name)
 	if e.config.UseCookiesLogin {
-		cookiesFile := constant.CookieFileName(name)
 		glog.Infof("配置项[useCookiesLogin]为true, 使用[%s]文件登录", cookiesFile)
 		if err := validateCookies(cookiesFile); err != nil {
 			return err
@@ -37,6 +37,9 @@ func (e *Engine) login(account config.Account) error {
 			"userPW":               account.Password,
 			"g-recaptcha-response": code,
 			"userRM":               "on",
+		}
+		if err = deleteCookies(cookiesFile); err != nil {
+			return err
 		}
 
 		c := e.getScraper(name).CloneCollector()
@@ -73,6 +76,16 @@ func (e *Engine) logout(account config.Account) error {
 		return err
 	}
 	glog.Infof("账号[%s]退出成功", account.Username)
+	return err
+}
+
+func deleteCookies(cookiesFile string) error {
+	_, err := os.Stat(cookiesFile)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	err = os.Remove(cookiesFile)
+	glog.Infof("删除历史[%s]文件", cookiesFile)
 	return err
 }
 
