@@ -1,4 +1,4 @@
-# About warmane
+# About Warmane
 
 ## 这是什么
 关于[Warmane](https://www.warmane.com/)网站的一些自动化操作和数据爬取分析功能
