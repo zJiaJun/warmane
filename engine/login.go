@@ -2,6 +2,7 @@ package engine
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/storage"
 	"github.com/golang/glog"
@@ -11,6 +12,7 @@ import (
 	"gitub.com/zJiajun/warmane/errors"
 	"gitub.com/zJiajun/warmane/model"
 	"os"
+	"strings"
 )
 
 func (e *Engine) login(account config.Account) error {
@@ -18,55 +20,56 @@ func (e *Engine) login(account config.Account) error {
 	cookiesFile := constant.CookieFileName(name)
 	if e.config.UseCookiesLogin {
 		glog.Infof("配置项[useCookiesLogin]为true, 使用[%s]文件登录", cookiesFile)
-		if err := validateCookies(cookiesFile); err != nil {
-			return err
-		} else {
+		if err := validateCookies(cookiesFile); err == nil {
 			glog.Infof("存在[%s]文件且验证通过,使用cookies文件登录", cookiesFile)
-			return nil
+		} else {
+			return err
 		}
 	} else {
 		glog.Infof("配置项[useCookiesLogin]为false, 使用2captcha方式登录")
 		capt := captcha.NewCaptcha(e.config.CaptchaApiKey, e.config.WarmaneSiteKey, constant.LoginUrl)
-		code, err := capt.HandleCaptcha()
-		if err != nil {
+		loginData := make(map[string]string, 5)
+		if code, err := capt.HandleCaptcha(); err == nil {
+			loginData["return"] = ""
+			loginData["userID"] = name
+			loginData["userPW"] = account.Password
+			loginData["g-recaptcha-response"] = code
+			loginData["userRM"] = "on"
+		} else {
 			return err
 		}
-		loginData := map[string]string{
-			"return":               "",
-			"userID":               name,
-			"userPW":               account.Password,
-			"g-recaptcha-response": code,
-			"userRM":               "on",
-		}
-		if err = deleteCookies(cookiesFile); err != nil {
-			return err
-		}
-
+		deleteCookies(cookiesFile)
 		c := e.getScraper(name).CloneCollector()
 		e.getScraper(name).SetRequestHeaders(c)
 		e.getScraper(name).DecodeResponse(c)
+		var bodyErr error
 		var bodyMsg model.BodyMsg
 		c.OnResponse(func(response *colly.Response) {
 			bodyText := string(response.Body)
-			if bodyText == constant.LoginSuccessBody {
-				glog.Infof("账号[%s]登录成功", name)
-			} else {
-				err := json.Unmarshal(response.Body, &bodyMsg)
-				if err != nil {
-					glog.Errorf("账号[%s]登陆解码Json错误, 返回内容: %s", name, bodyText)
-					return
-				}
-				if len(bodyMsg.Messages.Error) > 0 {
-					errMsg := bodyMsg.Messages.Error[0]
-					glog.Infof("账号[%s]登录失败, %s", name, errMsg)
-				} else {
-					glog.Infof("账号[%s]登录失败, %s", name, bodyText)
-				}
+			bodyErr = json.Unmarshal(response.Body, &bodyMsg)
+			if bodyErr != nil {
+				bodyErr = fmt.Errorf("账号[%s]登陆解码Json错误, 返回内容: %s", name, bodyText)
+				return
+			}
+			if len(bodyMsg.Messages.Error) > 0 {
+				errMsg := bodyMsg.Messages.Error[0]
+				bodyErr = fmt.Errorf("账号[%s]登录失败, %s", name, errMsg)
 			}
 		})
-		err = c.Post(constant.LoginUrl, loginData)
-		return err
+		err := c.Post(constant.LoginUrl, loginData)
+		if bodyErr != nil {
+			return bodyErr
+		}
+		if err != nil {
+			return err
+		}
 	}
+	if e.isLogin(account) {
+		glog.Infof("账号[%s]登录成功", name)
+	} else {
+		return fmt.Errorf("账号[%s]未登录", name)
+	}
+	return nil
 }
 
 func (e *Engine) logout(account config.Account) error {
@@ -79,14 +82,27 @@ func (e *Engine) logout(account config.Account) error {
 	return err
 }
 
-func deleteCookies(cookiesFile string) error {
+func (e *Engine) isLogin(account config.Account) bool {
+	r := false
+	c := e.getScraper(account.Username).CloneCollector()
+	e.getScraper(account.Username).SetRequestHeaders(c)
+	e.getScraper(account.Username).DecodeResponse(c)
+	c.OnHTML("div.content-inner.left > table > tbody > tr:nth-child(2) > td", func(element *colly.HTMLElement) {
+		if strings.Contains(element.Text, account.Username) {
+			r = true
+		}
+	})
+	_ = c.Visit(constant.AccountUrl)
+	return r
+}
+
+func deleteCookies(cookiesFile string) {
 	_, err := os.Stat(cookiesFile)
 	if os.IsNotExist(err) {
-		return nil
+		return
 	}
-	err = os.Remove(cookiesFile)
+	_ = os.Remove(cookiesFile)
 	glog.Infof("删除历史[%s]文件", cookiesFile)
-	return err
 }
 
 func validateCookies(cookiesFile string) error {

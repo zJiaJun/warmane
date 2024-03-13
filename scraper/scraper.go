@@ -21,6 +21,7 @@ func newScraper(name string) *Scraper {
 			colly.AllowURLRevisit(),
 			colly.UserAgent(extensions.RandomUserAgent()),
 			colly.IgnoreRobotsTxt(),
+			//colly.Debugger(&debug.LogDebugger{}),
 		),
 	}
 	s.c.SetRequestTimeout(60 * time.Second)
@@ -36,7 +37,7 @@ func (s *Scraper) SetRequestHeaders(c *colly.Collector) {
 		request.Headers.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7")
 		request.Headers.Set("Accept-Encoding", "gzip, deflate, br")
 		request.Headers.Set("Cache-Control", "no-cache")
-		request.Headers.Set("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8")
+		request.Headers.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
 		request.Headers.Set("Origin", constant.BaseUrl)
 		request.Headers.Set("Pragma", "no-cache")
 		request.Headers.Set("Referer", constant.LoginUrl)
@@ -46,7 +47,7 @@ func (s *Scraper) SetRequestHeaders(c *colly.Collector) {
 				s.csrfToken = element.Attr("content")
 				glog.Infof("查询获取warmane网站的csrfToken成功: %s", s.csrfToken)
 			})
-			_ = e.Visit(constant.LoginUrl)
+			_ = e.Visit(constant.BaseUrl)
 		}
 		request.Headers.Set("X-Csrf-Token", s.csrfToken)
 		request.Headers.Set("X-Requested-With", "XMLHttpRequest")

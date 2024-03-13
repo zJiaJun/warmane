@@ -60,11 +60,24 @@ func (e *Engine) trade(account config.Account) error {
 		"method":         "load",
 		"do":             "search",
 	}
+	/*
+		searchTradeData := map[string]string{
+			"update":    "page",
+			"method":    "load",
+			"realm":     "7",
+			"character": "",
+			"currency":  "coins",
+			"service":   "charactertrade",
+		}
+	*/
 	err := c.Post(constant.TradeUrl, searchTradeData)
 	/*
 		buf, _ := os.ReadFile("tradeResp.html")
 	*/
 	//doc, err := goquery.NewDocumentFromReader(strings.NewReader(string(buf)))
+	if tradeResp.Content == nil {
+		return err
+	}
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(tradeResp.Content[0]))
 	if err != nil {
 		return err
@@ -78,11 +91,13 @@ func (e *Engine) trade(account config.Account) error {
 			ti.ArmoryUrl = url
 			ti.Name = a.Text()
 		}
-		ti.CharDesc = strings.Replace(s.Find("td[class^=name] > div").Text(), " ", "", -1)
+		ti.CharDesc = s.Find("td[class^=name] > div").Text()
+		//ti.CharDesc = strings.Replace(s.Find("td[class^=name] > div").Text(), " ", "", -1)
 		ti.Coins, _ = strconv.Atoi(s.Find("td[class=costValues] > span").Text())
 		trades = append(trades, ti)
 		cc = cc + "\n" + ti.Name + "\n" + ti.ArmoryUrl + "\n" + strconv.Itoa(ti.Coins) + ti.CharDesc
 	})
 	os.WriteFile("tradeInfo", []byte(cc), 0644)
+	glog.Infof("商场角色交易数据写入成功, %d", len(cc))
 	return err
 }
