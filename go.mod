@@ -1,6 +1,6 @@
 module gitub.com/zJiajun/warmane
 
-go 1.20
+go 1.22.1
 
 require (
 	github.com/2captcha/2captcha-go v1.1.2
