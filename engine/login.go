@@ -64,8 +64,12 @@ func (e *Engine) login(account config.Account) error {
 			return err
 		}
 	}
-	if e.isLogin(account) {
+	isLogin, isAuth := e.isLogin(account)
+	if isLogin {
 		glog.Infof("账号[%s]登录成功", name)
+	} else if isAuth {
+		glog.Infof("账号[%s]二次认证(Two factor authentication)开始", name)
+		e.auth(account)
 	} else {
 		return fmt.Errorf("账号[%s]未登录", name)
 	}
@@ -82,18 +86,31 @@ func (e *Engine) logout(account config.Account) error {
 	return err
 }
 
-func (e *Engine) isLogin(account config.Account) bool {
-	r := false
+func (e *Engine) isLogin(account config.Account) (bool, bool) {
+	isLogin, isAuth := false, false
 	c := e.getScraper(account.Username).CloneCollector()
 	e.getScraper(account.Username).SetRequestHeaders(c)
 	e.getScraper(account.Username).DecodeResponse(c)
 	c.OnHTML("div.content-inner.left > table > tbody > tr:nth-child(2) > td", func(element *colly.HTMLElement) {
-		if strings.Contains(element.Text, account.Username) {
-			r = true
-		}
+		isLogin = strings.Contains(element.Text, account.Username)
+	})
+	c.OnHTML("form[id='frmAuthenticate']", func(element *colly.HTMLElement) {
+		isAuth = true
 	})
 	_ = c.Visit(constant.AccountUrl)
-	return r
+	return isLogin, isAuth
+}
+
+func (e *Engine) auth(account config.Account) {
+	name := account.Username
+	c := e.getScraper(name).CloneCollector()
+	e.getScraper(name).SetRequestHeaders(c)
+	e.getScraper(name).DecodeResponse(c)
+	var authCode string
+	glog.Infof("输入二次认证码[Auth Code]回车键结束")
+	fmt.Scanln(&authCode)
+	authData := map[string]string{"authCode": authCode}
+	_ = c.Post(constant.AuthenticationUrl, authData)
 }
 
 func deleteCookies(cookiesFile string) {

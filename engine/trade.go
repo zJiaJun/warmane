@@ -34,6 +34,7 @@ func (e *Engine) trade(account config.Account) error {
 	var tradeResp model.TradeResp
 	c.OnResponse(func(response *colly.Response) {
 		respBody := response.Body
+		glog.Infof("trade resp,%s", string(respBody))
 		err := json.Unmarshal(respBody, &tradeResp)
 		if err != nil {
 			glog.Errorf("账号[%s]商场角色交易数据解码Json错误, 返回内容: %s", name, string(respBody))

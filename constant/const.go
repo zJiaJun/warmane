@@ -11,11 +11,12 @@ const (
 )
 
 const (
-	BaseUrl    = "https://www.warmane.com"
-	AccountUrl = BaseUrl + "/account"
-	LoginUrl   = AccountUrl + "/login"
-	TradeUrl   = AccountUrl + "/trade"
-	LogoutUrl  = AccountUrl + "/logout"
+	BaseUrl           = "https://www.warmane.com"
+	AccountUrl        = BaseUrl + "/account"
+	AuthenticationUrl = AccountUrl + "/authentication"
+	LoginUrl          = AccountUrl + "/login"
+	TradeUrl          = AccountUrl + "/trade"
+	LogoutUrl         = AccountUrl + "/logout"
 )
 const (
 	CsrfTokenSelector = "meta[name='csrf-token']"
