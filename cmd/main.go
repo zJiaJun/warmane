@@ -18,7 +18,8 @@ func main() {
 	glog.Info("Main engine start")
 	defer glog.Flush()
 	e := engine.New(config)
-	//e.RunDailyPoints()
-	e.RunTradeData()
+	e.RunDailyPoints()
+	//e.RunTradeData()
 	glog.Infof("Main engine finish")
+
 }

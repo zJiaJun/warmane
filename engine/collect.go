@@ -23,19 +23,22 @@ func (e *Engine) RunDailyPoints() {
 
 func (e *Engine) collectPoints(account config.Account) {
 	defer e.wg.Done()
-	if err := e.login(account); err != nil {
-		glog.Errorf("账号[%s]登录错误, 原因: %v", account.Username, err)
-		return
-	}
-	if err := e.collect(account); err != nil {
-		glog.Errorf("账号[%s]自动收集签到点错误, 原因: %v", account.Username, err)
-		return
-	}
+	CookieStore()
 	/*
-		if err := e.logout(account); err != nil {
-			glog.Errorf("账号[%s]退出错误, 原因: %v", account.Username, err)
+		if err := e.login(account); err != nil {
+			glog.Errorf("账号[%s]登录错误, 原因: %v", account.Username, err)
 			return
 		}
+
+		if err := e.collect(account); err != nil {
+			glog.Errorf("账号[%s]自动收集签到点错误, 原因: %v", account.Username, err)
+			return
+		}
+
+			if err := e.logout(account); err != nil {
+				glog.Errorf("账号[%s]退出错误, 原因: %v", account.Username, err)
+				return
+			}
 	*/
 }
 

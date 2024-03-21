@@ -28,7 +28,8 @@ var CookieFileName = func(name string) string {
 	return name + ".cookies"
 }
 
-var CookieKeys = [6]string{
+var CookieKeys = [7]string{
+	"PHPSESSID",
 	"bb_lastvisit",
 	"bb_lastactivity",
 	"bb_sessionhash",
