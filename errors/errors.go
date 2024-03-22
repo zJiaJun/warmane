@@ -2,7 +2,7 @@ package errors
 
 import (
 	"errors"
-	"github.com/golang/glog"
+	"gitub.com/zJiajun/warmane/logger"
 )
 
 var (
@@ -18,12 +18,12 @@ func HandleError(err error) {
 	}
 	switch {
 	case errors.Is(err, ErrConfNotFound):
-		glog.Error(err.Error())
+		logger.Error(err.Error())
 	case errors.Is(err, ErrConfDecodeError):
-		glog.Error(err.Error())
+		logger.Error(err.Error())
 	case errors.Is(err, ErrConfNotFound):
-		glog.Error(err.Error())
+		logger.Error(err.Error())
 	default:
-		glog.Error(err.Error())
+		logger.Error(err.Error())
 	}
 }

@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
-	"github.com/golang/glog"
 	"gitub.com/zJiajun/warmane/config"
 	"gitub.com/zJiajun/warmane/constant"
+	"gitub.com/zJiajun/warmane/logger"
 	"gitub.com/zJiajun/warmane/model"
 	"os"
 	"strconv"
@@ -14,14 +14,14 @@ import (
 )
 
 func (e *Engine) RunTradeData() {
-	glog.Info("开始运行商场角色交易数据爬取")
+	logger.Info("开始运行商场角色交易数据爬取")
 	account := e.config.Accounts[0]
 	if err := e.login(account); err != nil {
-		glog.Errorf("账号[%s]登录错误, 原因: %v", account.Username, err)
+		logger.Errorf("账号[%s]登录错误, 原因: %v", account.Username, err)
 		return
 	}
 	if err := e.trade(account); err != nil {
-		glog.Errorf("账号[%s]查询商场数据错误, 原因: %v", account.Username, err)
+		logger.Errorf("账号[%s]查询商场数据错误, 原因: %v", account.Username, err)
 		return
 	}
 }
@@ -34,10 +34,9 @@ func (e *Engine) trade(account config.Account) error {
 	var tradeResp model.TradeResp
 	c.OnResponse(func(response *colly.Response) {
 		respBody := response.Body
-		glog.Infof("trade resp,%s", string(respBody))
 		err := json.Unmarshal(respBody, &tradeResp)
 		if err != nil {
-			glog.Errorf("账号[%s]商场角色交易数据解码Json错误, 返回内容: %s", name, string(respBody))
+			logger.Errorf("账号[%s]商场角色交易数据解码Json错误, 返回内容: %s", name, string(respBody))
 			return
 		}
 	})
@@ -99,6 +98,6 @@ func (e *Engine) trade(account config.Account) error {
 		cc = cc + "\n" + ti.Name + "\n" + ti.ArmoryUrl + "\n" + strconv.Itoa(ti.Coins) + ti.CharDesc
 	})
 	os.WriteFile("tradeInfo", []byte(cc), 0644)
-	glog.Infof("商场角色交易数据写入成功, %d", len(cc))
+	logger.Infof("商场角色交易数据写入成功, %d", len(cc))
 	return err
 }

@@ -3,7 +3,7 @@ package storage
 import (
 	"github.com/gocolly/colly/v2/storage"
 	"gitub.com/zJiajun/warmane/constant"
-	"log"
+	"gitub.com/zJiajun/warmane/logger"
 	"net/url"
 	"os"
 )
@@ -33,7 +33,6 @@ func (ds *DiskStorage) IsVisited(requestID uint64) (bool, error) {
 }
 
 func (ds *DiskStorage) Cookies(u *url.URL) string {
-	//glog.Infof("disk storage run cookies, %v", u)
 	buf, err := os.ReadFile(ds.fileName)
 	if err != nil {
 		return ""
@@ -42,8 +41,7 @@ func (ds *DiskStorage) Cookies(u *url.URL) string {
 }
 
 func (ds *DiskStorage) SetCookies(u *url.URL, cookies string) {
-	//glog.Infof("disk storage run SetCookies, %v, %s", u, cookies)
 	if err := os.WriteFile(ds.fileName, []byte(cookies), 0644); err != nil {
-		log.Fatal(err)
+		logger.Error(err)
 	}
 }

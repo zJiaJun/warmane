@@ -2,24 +2,33 @@ package main
 
 import (
 	"flag"
-	"github.com/golang/glog"
 	"gitub.com/zJiajun/warmane/engine"
+	"gitub.com/zJiajun/warmane/logger"
+	"os"
 )
 
-var config string
+var goflag = flag.NewFlagSet("warmane", flag.ExitOnError)
+var (
+	config string
+	points bool
+	trade  bool
+)
 
 func init() {
-	_ = flag.Set("log_dir", "./logs")
-	flag.StringVar(&config, "config", "config.yml", "configuration file")
-	flag.Parse()
+	goflag.StringVar(&config, "c", "config.yml", "Configuration file")
+	goflag.BoolVar(&points, "p", false, "Run daily collect points")
+	goflag.BoolVar(&trade, "t", false, "Run scraper trade data")
+	goflag.Parse(os.Args[1:])
 }
 
 func main() {
-	glog.Info("Main engine start")
-	defer glog.Flush()
+	logger.Info("Main engine start")
 	e := engine.New(config)
-	e.RunDailyPoints()
-	//e.RunTradeData()
-	glog.Infof("Main engine finish")
-
+	if points {
+		e.RunDailyPoints()
+	}
+	if trade {
+		e.RunTradeData()
+	}
+	logger.Info("Main engine finish")
 }

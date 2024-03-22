@@ -2,8 +2,8 @@ package scraper
 
 import (
 	"github.com/gocolly/colly/v2"
-	"github.com/golang/glog"
 	"gitub.com/zJiajun/warmane/constant"
+	"gitub.com/zJiajun/warmane/logger"
 	"gitub.com/zJiajun/warmane/scraper/internal/decode"
 	"gitub.com/zJiajun/warmane/scraper/internal/extensions"
 	"gitub.com/zJiajun/warmane/scraper/internal/storage"
@@ -45,7 +45,7 @@ func (s *Scraper) SetRequestHeaders(c *colly.Collector) {
 			e := c.Clone()
 			e.OnHTML(constant.CsrfTokenSelector, func(element *colly.HTMLElement) {
 				s.csrfToken = element.Attr("content")
-				glog.Infof("查询获取warmane网站的csrfToken成功: %s", s.csrfToken)
+				logger.Infof("查询获取warmane网站的csrfToken成功: %s", s.csrfToken)
 			})
 			_ = e.Visit(constant.BaseUrl)
 		}
@@ -56,18 +56,16 @@ func (s *Scraper) SetRequestHeaders(c *colly.Collector) {
 
 func (s *Scraper) DecodeResponse(c *colly.Collector) {
 	c.OnResponse(func(response *colly.Response) {
-		//glog.Infof("onResponse [%s], statusCode:[%d], size:[%d]", response.Request.URL, response.StatusCode, len(response.Body))
 		encoding := response.Headers.Get("Content-Encoding")
 		if encoding == "" {
 			return
 		}
 		decodeResp, err := decode.ResponseBody(encoding, response.Body)
 		if err != nil {
-			glog.Errorf("onResponse decode [%s] response error, %v", response.Request.URL, err)
+			logger.Errorf("onResponse decode [%s] response error, %v", response.Request.URL, err)
 			return
 		}
 		response.Body = decodeResp
-		//glog.Infof("onResponse decode [%s] response success", response.Request.URL)
 	})
 }
 

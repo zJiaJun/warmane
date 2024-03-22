@@ -3,7 +3,7 @@ package captcha
 import (
 	"fmt"
 	api2captcha "github.com/2captcha/2captcha-go"
-	"github.com/golang/glog"
+	"gitub.com/zJiajun/warmane/logger"
 	"time"
 )
 
@@ -41,13 +41,13 @@ func (c *Captcha) queryBalance() (float64, error) {
 	if err != nil {
 		return 0.0, err
 	}
-	glog.Infof("验证码破解服务可用余额: %f美元", balance)
+	logger.Infof("验证码破解服务可用余额: %f美元", balance)
 	return balance, nil
 }
 
 func (c *Captcha) solveCaptcha() (string, error) {
 	start := time.Now()
-	glog.Info("验证码破解服务开始执行, 需等待1-2分钟")
+	logger.Info("验证码破解服务开始执行, 需等待1-2分钟")
 	r := api2captcha.ReCaptcha{
 		SiteKey: c.siteKey,
 		Url:     c.url,
@@ -57,6 +57,6 @@ func (c *Captcha) solveCaptcha() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	glog.Infof("验证码破解服务执行成功, 耗时 %v", time.Since(start))
+	logger.Infof("验证码破解服务执行成功, 耗时 %v", time.Since(start))
 	return code, nil
 }
