@@ -31,7 +31,9 @@ func (e *Engine) trade(account config.Account) error {
 	c := e.getScraper(name).CloneCollector()
 	e.getScraper(name).SetRequestHeaders(c)
 	e.getScraper(name).DecodeResponse(c)
-	var tradeResp model.TradeResp
+	var tradeResp struct {
+		Content []string `json:"content"`
+	}
 	c.OnResponse(func(response *colly.Response) {
 		respBody := response.Body
 		err := json.Unmarshal(respBody, &tradeResp)

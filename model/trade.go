@@ -1,9 +1,5 @@
 package model
 
-type TradeResp struct {
-	Content []string `json:"content"`
-}
-
 type TradeInfo struct {
 	Name      string    //角色名称
 	ArmoryUrl string    //角色详情地址

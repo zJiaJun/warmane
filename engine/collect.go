@@ -6,7 +6,6 @@ import (
 	"gitub.com/zJiajun/warmane/config"
 	"gitub.com/zJiajun/warmane/constant"
 	"gitub.com/zJiajun/warmane/logger"
-	"gitub.com/zJiajun/warmane/model"
 )
 
 func (e *Engine) RunDailyPoints() {
@@ -50,7 +49,13 @@ func (e *Engine) collect(account config.Account) error {
 	c := e.getScraper(name).CloneCollector()
 	e.getScraper(name).SetRequestHeaders(c)
 	e.getScraper(name).DecodeResponse(c)
-	var bodyMsg model.BodyMsg
+	var bodyMsg struct {
+		Messages struct {
+			Success []string `json:"success"`
+			Error   []string `json:"error"`
+		}
+		Points []float64 `json:"points"`
+	}
 	c.OnResponse(func(response *colly.Response) {
 		bodyText := string(response.Body)
 		err := json.Unmarshal(response.Body, &bodyMsg)

@@ -30,5 +30,6 @@ func main() {
 	if trade {
 		e.RunTradeData()
 	}
+	e.KeepSession()
 	logger.Info("Main engine finish")
 }

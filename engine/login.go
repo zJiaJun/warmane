@@ -10,10 +10,22 @@ import (
 	"gitub.com/zJiajun/warmane/constant"
 	"gitub.com/zJiajun/warmane/errors"
 	"gitub.com/zJiajun/warmane/logger"
-	"gitub.com/zJiajun/warmane/model"
 	"os"
 	"strings"
+	"time"
 )
+
+func (e *Engine) KeepSession() {
+	t := time.NewTicker(11 * time.Minute)
+	for {
+		select {
+		case <-t.C:
+			if err := e.login(e.config.Accounts[0]); err != nil {
+				logger.Errorf("账号[%s]登录错误, 原因: %v", e.config.Accounts[0].Username, err)
+			}
+		}
+	}
+}
 
 func (e *Engine) login(account config.Account) error {
 	name := account.Username
@@ -43,7 +55,12 @@ func (e *Engine) login(account config.Account) error {
 		e.getScraper(name).SetRequestHeaders(c)
 		e.getScraper(name).DecodeResponse(c)
 		var bodyErr error
-		var bodyMsg model.BodyMsg
+		var bodyMsg struct {
+			Messages struct {
+				Success []string `json:"success"`
+				Error   []string `json:"error"`
+			}
+		}
 		c.OnResponse(func(response *colly.Response) {
 			bodyText := string(response.Body)
 			bodyErr = json.Unmarshal(response.Body, &bodyMsg)
