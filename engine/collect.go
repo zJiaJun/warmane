@@ -6,6 +6,8 @@ import (
 	"gitub.com/zJiajun/warmane/config"
 	"gitub.com/zJiajun/warmane/constant"
 	"gitub.com/zJiajun/warmane/logger"
+	"gitub.com/zJiajun/warmane/model"
+	"strings"
 )
 
 func (e *Engine) RunDailyPoints() {
@@ -30,22 +32,10 @@ func (e *Engine) collectPoints(account config.Account) {
 		logger.Errorf("账号[%s]自动收集签到点错误, 原因: %v", account.Username, err)
 		return
 	}
-	/*
-		if err := e.logout(account); err != nil {
-			logger.Errorf("账号[%s]退出错误, 原因: %v", account.Username, err)
-			return
-		}
-	*/
 }
 
 func (e *Engine) collect(account config.Account) error {
 	name := account.Username
-	beforeCoins, beforePoints, err := e.getInfo(account)
-	if err != nil {
-		return err
-	}
-	logger.Infof("账号[%s]收集签到点[前]的 coins: [%s], points: [%s]", name, beforeCoins, beforePoints)
-
 	c := e.getScraper(name).CloneCollector()
 	e.getScraper(name).SetRequestHeaders(c)
 	e.getScraper(name).DecodeResponse(c)
@@ -75,29 +65,51 @@ func (e *Engine) collect(account config.Account) error {
 		}
 	})
 	collectPointsData := map[string]string{"collectpoints": "true"}
-	err = c.Post(constant.AccountUrl, collectPointsData)
+	if err := c.Post(constant.AccountUrl, collectPointsData); err != nil {
+		return err
+	}
+	acc, err := e.getAccountInfo(account)
 	if err != nil {
 		return err
 	}
-	afterCoins, afterPoints, err := e.getInfo(account)
-	if err != nil {
-		return err
-	}
-	logger.Infof("账号[%s]收集签到点[后]的 coins: [%s], points: [%s]", name, afterCoins, afterPoints)
+	logger.Infof("账号[%s]收集签到点[后]的信息 %s", name, acc)
 	return err
 }
 
-func (e *Engine) getInfo(account config.Account) (coins string, points string, err error) {
+func (e *Engine) getAccountInfo(account config.Account) (*model.Account, error) {
+	acc := &model.Account{}
 	name := account.Username
+	acc.Name = name
 	c := e.getScraper(name).CloneCollector()
 	e.getScraper(name).SetRequestHeaders(c)
 	e.getScraper(name).DecodeResponse(c)
-	c.OnHTML(constant.CoinsSelector, func(element *colly.HTMLElement) {
-		coins = element.Text
+	c.OnHTML(".myCoins", func(element *colly.HTMLElement) {
+		acc.Coins = element.Text
 	})
-	c.OnHTML(constant.PointsSelector, func(element *colly.HTMLElement) {
-		points = element.Text
+	c.OnHTML(".myPoints", func(element *colly.HTMLElement) {
+		acc.Points = element.Text
 	})
-	err = c.Visit(constant.AccountUrl)
-	return
+	c.OnHTML("div.content-inner.left > table > tbody > tr:nth-child(6) > td", func(element *colly.HTMLElement) {
+		acc.Email = strings.TrimSpace(strings.Split(element.Text, ":")[1])
+	})
+	c.OnHTML("div.content-inner.right > table > tbody > tr:nth-child(2) > td", func(element *colly.HTMLElement) {
+		acc.Status = strings.TrimSpace(strings.Split(element.Text, ":")[1])
+	})
+	c.OnHTML("div.content-inner.right > table > tbody > tr:nth-child(3) > td", func(element *colly.HTMLElement) {
+		acc.DonationRank = strings.TrimSpace(strings.Split(element.Text, ":")[1])
+	})
+	c.OnHTML("div.content-inner.right > table > tbody > tr:nth-child(4) > td", func(element *colly.HTMLElement) {
+		acc.ActivityRank = strings.TrimSpace(strings.Split(element.Text, ":")[1])
+	})
+	c.OnHTML("div.content-inner.right > table > tbody > tr:nth-child(5) > td", func(element *colly.HTMLElement) {
+		acc.CommunityRank = strings.TrimSpace(strings.Split(element.Text, ":")[1])
+	})
+	c.OnHTML("div.content-inner.right > table > tbody > tr:nth-child(7) > td", func(element *colly.HTMLElement) {
+		acc.JoinDate = strings.TrimSpace(strings.Split(element.Text, ":")[1])
+	})
+	c.OnHTML("div.content-inner.right > table > tbody > tr:nth-child(8) > td", func(element *colly.HTMLElement) {
+		acc.LastSeen = strings.TrimSpace(strings.Split(element.Text, ":")[1])
+	})
+	err := c.Visit(constant.AccountUrl)
+	return acc, err
 }

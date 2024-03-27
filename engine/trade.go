@@ -8,7 +8,7 @@ import (
 	"gitub.com/zJiajun/warmane/constant"
 	"gitub.com/zJiajun/warmane/logger"
 	"gitub.com/zJiajun/warmane/model"
-	"os"
+	"gorm.io/gorm/clause"
 	"strconv"
 	"strings"
 )
@@ -75,8 +75,8 @@ func (e *Engine) trade(account config.Account) error {
 	err := c.Post(constant.TradeUrl, searchTradeData)
 	/*
 		buf, _ := os.ReadFile("tradeResp.html")
+		doc, err := goquery.NewDocumentFromReader(strings.NewReader(string(buf)))
 	*/
-	//doc, err := goquery.NewDocumentFromReader(strings.NewReader(string(buf)))
 	if tradeResp.Content == nil {
 		return err
 	}
@@ -85,7 +85,6 @@ func (e *Engine) trade(account config.Account) error {
 		return err
 	}
 	var trades []*model.TradeInfo
-	var cc string
 	doc.Find("tr[class!=static]").Each(func(i int, s *goquery.Selection) {
 		ti := &model.TradeInfo{}
 		a := s.Find("td[class^=name] > a")
@@ -93,13 +92,19 @@ func (e *Engine) trade(account config.Account) error {
 			ti.ArmoryUrl = url
 			ti.Name = a.Text()
 		}
-		ti.CharDesc = s.Find("td[class^=name] > div").Text()
-		//ti.CharDesc = strings.Replace(s.Find("td[class^=name] > div").Text(), " ", "", -1)
+		cd := s.Find("td[class^=name] > div").Text()
+		var b strings.Builder
+		for _, v := range strings.Split(cd, "\n") {
+			b.WriteString(strings.TrimSpace(v) + "\n")
+		}
+		ti.CharDesc = b.String()
 		ti.Coins, _ = strconv.Atoi(s.Find("td[class=costValues] > span").Text())
 		trades = append(trades, ti)
-		cc = cc + "\n" + ti.Name + "\n" + ti.ArmoryUrl + "\n" + strconv.Itoa(ti.Coins) + ti.CharDesc
 	})
-	os.WriteFile("tradeInfo", []byte(cc), 0644)
-	logger.Infof("商场角色交易数据写入成功, %d", len(cc))
+	r := e.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "name"}},
+		UpdateAll: true,
+	}).Create(trades)
+	logger.Infof("商场角色交易数据写入成功, %d", r.RowsAffected)
 	return err
 }

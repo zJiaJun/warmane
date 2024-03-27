@@ -43,7 +43,7 @@ func (s *Scraper) SetRequestHeaders(c *colly.Collector) {
 		request.Headers.Set("Referer", constant.LoginUrl)
 		if s.csrfToken == "" {
 			e := c.Clone()
-			e.OnHTML(constant.CsrfTokenSelector, func(element *colly.HTMLElement) {
+			e.OnHTML("meta[name='csrf-token']", func(element *colly.HTMLElement) {
 				s.csrfToken = element.Attr("content")
 				logger.Infof("查询获取warmane网站的csrfToken成功: %s", s.csrfToken)
 			})

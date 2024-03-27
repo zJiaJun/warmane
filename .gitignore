@@ -17,6 +17,7 @@ build/
 /warmane
 dev_config.yml
 *.cookies
+warmane.db
 
 .ropeproject/
 vendor/
