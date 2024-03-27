@@ -8,6 +8,7 @@ import (
 	"gitub.com/zJiajun/warmane/logger"
 	"gitub.com/zJiajun/warmane/model"
 	"strings"
+	"time"
 )
 
 func (e *Engine) RunDailyPoints() {
@@ -72,7 +73,9 @@ func (e *Engine) collect(account config.Account) error {
 	if err != nil {
 		return err
 	}
-	logger.Infof("账号[%s]收集签到点[后]的信息 %s", name, acc)
+	dp := &model.DailyPoint{Account: acc, PointDate: time.Now()}
+	r := e.db.Create(dp)
+	logger.Infof("账号[%s]收集签到点[后]的信息 %s, 影响行数 %d", name, acc, r.RowsAffected)
 	return err
 }
 

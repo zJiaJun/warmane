@@ -17,7 +17,7 @@ var (
 func init() {
 	goflag.StringVar(&config, "c", "config.yml", "Configuration file")
 	goflag.BoolVar(&points, "p", false, "Run daily collect points")
-	goflag.BoolVar(&trade, "t", true, "Run scraper trade data")
+	goflag.BoolVar(&trade, "t", false, "Run scraper trade data")
 	goflag.Parse(os.Args[1:])
 }
 

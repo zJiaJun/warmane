@@ -42,6 +42,7 @@ func (e *Engine) getScraper(name string) *scraper.Scraper {
 
 func autoMigrate(db *gorm.DB) error {
 	return db.AutoMigrate(
+		&model.DailyPoint{},
 		&model.TradeInfo{},
 	)
 }
