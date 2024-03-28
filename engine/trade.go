@@ -13,6 +13,14 @@ import (
 	"strings"
 )
 
+const (
+	FrostwolfRealm = "4"
+	LordaeronRealm = "6"
+	IcecrownRealm  = "7"
+	BlackrockRealm = "10"
+	OnyxiaRealm    = "14"
+)
+
 func (e *Engine) RunTradeData() {
 	logger.Info("开始运行商场角色交易数据爬取")
 	account := e.config.Accounts[0]
@@ -36,8 +44,7 @@ func (e *Engine) trade(account config.Account) error {
 	}
 	c.OnResponse(func(response *colly.Response) {
 		respBody := response.Body
-		err := json.Unmarshal(respBody, &tradeResp)
-		if err != nil {
+		if err := json.Unmarshal(respBody, &tradeResp); err != nil {
 			logger.Errorf("账号[%s]商场角色交易数据解码Json错误, 返回内容: %s", name, string(respBody))
 			return
 		}
@@ -49,7 +56,7 @@ func (e *Engine) trade(account config.Account) error {
 		"tradehandler":   "",
 		"service":        "charactertrade",
 		"currency":       "coins",
-		"realm":          "7",
+		"realm":          IcecrownRealm,
 		"character":      "",
 		"currentmenu":    "-1",
 		"currentsubmenu": "-1",
@@ -62,21 +69,9 @@ func (e *Engine) trade(account config.Account) error {
 		"method":         "load",
 		"do":             "search",
 	}
-	/*
-		searchTradeData := map[string]string{
-			"update":    "page",
-			"method":    "load",
-			"realm":     "7",
-			"character": "",
-			"currency":  "coins",
-			"service":   "charactertrade",
-		}
-	*/
+
 	err := c.Post(constant.TradeUrl, searchTradeData)
-	/*
-		buf, _ := os.ReadFile("tradeResp.html")
-		doc, err := goquery.NewDocumentFromReader(strings.NewReader(string(buf)))
-	*/
+
 	if tradeResp.Content == nil {
 		return err
 	}
@@ -87,24 +82,46 @@ func (e *Engine) trade(account config.Account) error {
 	var trades []*model.TradeInfo
 	doc.Find("tr[class!=static]").Each(func(i int, s *goquery.Selection) {
 		ti := &model.TradeInfo{}
+		ti.Realm = IcecrownRealm
 		a := s.Find("td[class^=name] > a")
 		if url, exists := a.Attr("href"); exists {
 			ti.ArmoryUrl = url
 			ti.Name = a.Text()
 		}
+		/*
+			CHARACTER INFORMATION
+			Faction: Alliance
+			Race: Draenei (male)
+			Class: Shaman
+			Level: 80
+			Achievement Points: 1855
+			Gold: 5
+			Played time: 3 weeks
+			Arena Points: 9
+			Honor Points: 1301
+			Inventory is not included, only the character's currently equipped items will be present upon purchase                                        Emblems are not included
+		*/
 		cd := s.Find("td[class^=name] > div").Text()
 		var b strings.Builder
 		for _, v := range strings.Split(cd, "\n") {
-			b.WriteString(strings.TrimSpace(v) + "\n")
+			tv := strings.TrimSpace(v)
+			if tv == "" {
+				continue
+			}
+			b.WriteString(tv + "\n")
 		}
 		ti.CharDesc = b.String()
 		ti.Coins, _ = strconv.Atoi(s.Find("td[class=costValues] > span").Text())
 		trades = append(trades, ti)
 	})
 	r := e.db.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "name"}},
+		Columns:   []clause.Column{{Name: "realm"}, {Name: "name"}},
 		UpdateAll: true,
 	}).Create(trades)
 	logger.Infof("商场角色交易数据写入成功, %d", r.RowsAffected)
 	return err
+}
+
+func (e *Engine) characterDetail() error {
+	return nil
 }

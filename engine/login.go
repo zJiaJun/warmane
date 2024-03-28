@@ -16,7 +16,7 @@ import (
 )
 
 func (e *Engine) KeepSession() {
-	t := time.NewTicker(11 * time.Minute)
+	t := time.NewTicker(15 * time.Minute)
 	for {
 		select {
 		case <-t.C:
