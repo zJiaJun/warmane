@@ -24,7 +24,15 @@ func newScraper(name string) *Scraper {
 			//colly.Debugger(&debug.LogDebugger{}),
 		),
 	}
-	s.c.SetRequestTimeout(60 * time.Second)
+	s.c.SetRequestTimeout(10 * time.Second)
+	if err := s.c.Limit(&colly.LimitRule{
+		DomainGlob:  "*warmane.*",
+		Parallelism: 1,
+		Delay:       3 * time.Second,
+		RandomDelay: 500 * time.Millisecond,
+	}); err != nil {
+		panic(err)
+	}
 	if err := s.c.SetStorage(storage.NewDiskStorage(name)); err != nil {
 		panic(err)
 	}

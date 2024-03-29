@@ -7,6 +7,7 @@ import (
 	"gitub.com/zJiajun/warmane/constant"
 	"gitub.com/zJiajun/warmane/logger"
 	"gitub.com/zJiajun/warmane/model"
+	"gitub.com/zJiajun/warmane/model/table"
 	"strings"
 	"time"
 )
@@ -69,17 +70,17 @@ func (e *Engine) collect(account config.Account) error {
 	if err := c.Post(constant.AccountUrl, collectPointsData); err != nil {
 		return err
 	}
-	acc, err := e.getAccountInfo(account)
+	acc, err := e.fetchAccountInfo(account)
 	if err != nil {
 		return err
 	}
-	dp := &model.DailyPoint{Account: acc, PointDate: time.Now()}
+	dp := &table.DailyPoint{Account: acc, PointDate: time.Now()}
 	r := e.db.Create(dp)
 	logger.Infof("账号[%s]收集签到点[后]的信息 %s, 影响行数 %d", name, acc, r.RowsAffected)
 	return err
 }
 
-func (e *Engine) getAccountInfo(account config.Account) (*model.Account, error) {
+func (e *Engine) fetchAccountInfo(account config.Account) (*model.Account, error) {
 	acc := &model.Account{}
 	name := account.Username
 	acc.Name = name

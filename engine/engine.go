@@ -4,7 +4,7 @@ import (
 	"gitub.com/zJiajun/warmane/config"
 	"gitub.com/zJiajun/warmane/database"
 	"gitub.com/zJiajun/warmane/logger"
-	"gitub.com/zJiajun/warmane/model"
+	"gitub.com/zJiajun/warmane/model/table"
 	"gitub.com/zJiajun/warmane/scraper"
 	"gorm.io/gorm"
 	"sync"
@@ -42,7 +42,7 @@ func (e *Engine) getScraper(name string) *scraper.Scraper {
 
 func autoMigrate(db *gorm.DB) error {
 	return db.AutoMigrate(
-		&model.DailyPoint{},
-		&model.TradeInfo{},
+		&table.DailyPoint{},
+		&table.TradeInfo{},
 	)
 }

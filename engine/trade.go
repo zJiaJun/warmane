@@ -6,19 +6,21 @@ import (
 	"github.com/gocolly/colly/v2"
 	"gitub.com/zJiajun/warmane/config"
 	"gitub.com/zJiajun/warmane/constant"
+	"gitub.com/zJiajun/warmane/engine/internal"
 	"gitub.com/zJiajun/warmane/logger"
 	"gitub.com/zJiajun/warmane/model"
+	"gitub.com/zJiajun/warmane/model/table"
 	"gorm.io/gorm/clause"
 	"strconv"
 	"strings"
 )
 
-const (
-	FrostwolfRealm = "4"
-	LordaeronRealm = "6"
-	IcecrownRealm  = "7"
-	BlackrockRealm = "10"
-	OnyxiaRealm    = "14"
+var (
+	frostwolfRealm = &internal.Pair[string, string]{Left: "4", Right: "Frostwolf"}
+	lordaeronRealm = &internal.Pair[string, string]{Left: "6", Right: "Lordaeron"}
+	icecrownRealm  = &internal.Pair[string, string]{Left: "7", Right: "Icecrown"}
+	blackrockRealm = &internal.Pair[string, string]{Left: "10", Right: "Blackrock"}
+	onyxiaRealm    = &internal.Pair[string, string]{Left: "14", Right: "Onyxia"}
 )
 
 func (e *Engine) RunTradeData() {
@@ -35,6 +37,18 @@ func (e *Engine) RunTradeData() {
 }
 
 func (e *Engine) trade(account config.Account) error {
+	trades, err := e.fetchTradeData(account)
+	if err != nil {
+		return err
+	}
+	err = e.storeTradeData(account.Username, trades)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (e *Engine) fetchTradeData(account config.Account) ([]*table.TradeInfo, error) {
 	name := account.Username
 	c := e.getScraper(name).CloneCollector()
 	e.getScraper(name).SetRequestHeaders(c)
@@ -56,7 +70,7 @@ func (e *Engine) trade(account config.Account) error {
 		"tradehandler":   "",
 		"service":        "charactertrade",
 		"currency":       "coins",
-		"realm":          IcecrownRealm,
+		"realm":          icecrownRealm.Left,
 		"character":      "",
 		"currentmenu":    "-1",
 		"currentsubmenu": "-1",
@@ -73,20 +87,21 @@ func (e *Engine) trade(account config.Account) error {
 	err := c.Post(constant.TradeUrl, searchTradeData)
 
 	if tradeResp.Content == nil {
-		return err
+		return nil, err
 	}
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(tradeResp.Content[0]))
 	if err != nil {
-		return err
+		return nil, err
 	}
-	var trades []*model.TradeInfo
+	var trades []*table.TradeInfo
 	doc.Find("tr[class!=static]").Each(func(i int, s *goquery.Selection) {
-		ti := &model.TradeInfo{}
-		ti.Realm = IcecrownRealm
+		ti := &table.TradeInfo{
+			BasicCharacter: &model.BasicCharacter{Realm: icecrownRealm.Right},
+		}
 		a := s.Find("td[class^=name] > a")
 		if url, exists := a.Attr("href"); exists {
 			ti.ArmoryUrl = url
-			ti.Name = a.Text()
+			ti.BasicCharacter.Name = a.Text()
 		}
 		/*
 			CHARACTER INFORMATION
@@ -101,27 +116,49 @@ func (e *Engine) trade(account config.Account) error {
 			Honor Points: 1301
 			Inventory is not included, only the character's currently equipped items will be present upon purchase                                        Emblems are not included
 		*/
+		ti.Coins, _ = strconv.Atoi(s.Find("td[class=costValues] > span").Text())
 		cd := s.Find("td[class^=name] > div").Text()
 		var b strings.Builder
+		var inventoryIncluded int
 		for _, v := range strings.Split(cd, "\n") {
 			tv := strings.TrimSpace(v)
 			if tv == "" {
 				continue
 			}
+			if strings.Contains(tv, "Inventory is not included") {
+				inventoryIncluded = 0
+			} else {
+				inventoryIncluded = 1
+			}
 			b.WriteString(tv + "\n")
 		}
 		ti.CharDesc = b.String()
-		ti.Coins, _ = strconv.Atoi(s.Find("td[class=costValues] > span").Text())
+		ti.InventoryIncluded = inventoryIncluded
 		trades = append(trades, ti)
 	})
+	return trades, nil
+}
+
+func (e *Engine) storeTradeData(name string, trades []*table.TradeInfo) error {
 	r := e.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "realm"}, {Name: "name"}},
 		UpdateAll: true,
 	}).Create(trades)
+	if r.Error != nil {
+		return r.Error
+	}
 	logger.Infof("商场角色交易数据写入成功, %d", r.RowsAffected)
-	return err
-}
-
-func (e *Engine) characterDetail() error {
 	return nil
+
+}
+func (e *Engine) fillCharacterDetail(name string, ti *table.TradeInfo) error {
+	armoryApiUrl := strings.ReplaceAll(ti.ArmoryUrl, "armory.warmane.com", "armory.warmane.com/api")
+	c := e.getScraper(name).CloneCollector()
+	c.OnResponse(func(response *colly.Response) {
+		if err := json.Unmarshal(response.Body, &ti.BasicCharacter); err != nil {
+			return
+		}
+	})
+	err := c.Visit(armoryApiUrl)
+	return err
 }

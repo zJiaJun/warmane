@@ -7,6 +7,7 @@ type BasicCharacter struct {
 	Race              string
 	Gender            string
 	Class             string
-	Level             int
-	AchievementPoints int
+	Level             string
+	AchievementPoints string `json:"achievementpoints"`
+	HonorableKills    string `json:"honorablekills"`
 }

@@ -1,6 +1,7 @@
-package model
+package table
 
 import (
+	"gitub.com/zJiajun/warmane/model"
 	"gorm.io/gorm"
 	"time"
 )
@@ -8,7 +9,7 @@ import (
 const DailyPointTableName = "daily_point_info"
 
 type DailyPoint struct {
-	Account   *Account `gorm:"embedded"`
+	Account   *model.Account `gorm:"embedded"`
 	PointDate time.Time
 	gorm.Model
 }
