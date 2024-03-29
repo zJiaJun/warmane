@@ -7,6 +7,7 @@ import (
 	"gitub.com/zJiajun/warmane/scraper/internal/decode"
 	"gitub.com/zJiajun/warmane/scraper/internal/extensions"
 	"gitub.com/zJiajun/warmane/scraper/internal/storage"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -15,7 +16,7 @@ type Scraper struct {
 	csrfToken string
 }
 
-func newScraper(name string) *Scraper {
+func newScraper(name string, db *gorm.DB) *Scraper {
 	s := &Scraper{
 		c: colly.NewCollector(
 			colly.AllowURLRevisit(),
@@ -33,7 +34,12 @@ func newScraper(name string) *Scraper {
 	}); err != nil {
 		panic(err)
 	}
-	if err := s.c.SetStorage(storage.NewDiskStorage(name)); err != nil {
+	/*
+		if err := s.c.SetStorage(storage.NewDiskStorage(name)); err != nil {
+			panic(err)
+		}
+	*/
+	if err := s.c.SetStorage(storage.NewSqliteStorage(name, db)); err != nil {
 		panic(err)
 	}
 	return s

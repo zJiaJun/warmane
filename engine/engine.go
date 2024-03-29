@@ -31,7 +31,7 @@ func New(cfg string) *Engine {
 	}
 	return &Engine{
 		config:   conf,
-		scrapers: scraper.New(conf.Accounts),
+		scrapers: scraper.New(conf.Accounts, db),
 		db:       db,
 	}
 }
