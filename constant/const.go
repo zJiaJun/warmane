@@ -11,7 +11,8 @@ const (
 )
 
 const (
-	BaseUrl           = "https://www.warmane.com"
+	HOST              = "www.warmane.com"
+	BaseUrl           = "https://" + HOST
 	AccountUrl        = BaseUrl + "/account"
 	AuthenticationUrl = AccountUrl + "/authentication"
 	LoginUrl          = AccountUrl + "/login"
@@ -23,11 +24,12 @@ var CookieFileName = func(name string) string {
 	return name + ".cookies"
 }
 
-var CookieKeys = [6]string{
+var CookieKeys = [7]string{
 	"PHPSESSID",
 	"bb_lastvisit",
 	"bb_lastactivity",
 	"bb_sessionhash",
 	"bb_userid",
 	"bb_password",
+	"_wM",
 }

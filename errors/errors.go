@@ -8,8 +8,8 @@ import (
 var (
 	ErrConfNotFound      = errors.New("配置文件[config.yml]未找到, 请把配置文件放到程序同一目录下")
 	ErrConfDecodeError   = errors.New("配置文件[config.yml]解析错误, 请检查配置文件")
-	ErrCookieNotFound    = errors.New("cookies文件未找到,请把配置文件放到程序同一目录下")
-	ErrCookieNonMatchKey = errors.New("cookies文件存在,不匹配cookiesKey")
+	ErrCookieNotFound    = errors.New("cookies数据未找到")
+	ErrCookieNonMatchKey = errors.New("cookies数据存在,但不匹配cookiesKey")
 )
 
 func HandleError(err error) {

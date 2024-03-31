@@ -4,13 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gocolly/colly/v2"
-	"github.com/gocolly/colly/v2/storage"
 	"gitub.com/zJiajun/warmane/captcha"
 	"gitub.com/zJiajun/warmane/config"
 	"gitub.com/zJiajun/warmane/constant"
-	"gitub.com/zJiajun/warmane/errors"
 	"gitub.com/zJiajun/warmane/logger"
-	"os"
+	"gitub.com/zJiajun/warmane/scraper/storage"
 	"strings"
 	"time"
 )
@@ -29,11 +27,10 @@ func (e *Engine) KeepSession() {
 
 func (e *Engine) login(account config.Account) error {
 	name := account.Username
-	cookiesFile := constant.CookieFileName(name)
 	if e.config.UseCookiesLogin {
-		logger.Infof("配置项[useCookiesLogin]为true, 使用[%s]文件登录", cookiesFile)
-		if err := validateCookies(cookiesFile); err == nil {
-			logger.Infof("存在[%s]文件且验证通过,使用cookies文件登录", cookiesFile)
+		logger.Infof("配置项[useCookiesLogin]为true, 使用cookies登录")
+		if err := storage.Validate(e.db, name); err == nil {
+			logger.Infof("[%s]存在cookies且验证通过,使用cookies登录", name)
 		} else {
 			return err
 		}
@@ -50,7 +47,6 @@ func (e *Engine) login(account config.Account) error {
 		} else {
 			return err
 		}
-		deleteCookies(cookiesFile)
 		c := e.getScraper(name).CloneCollector()
 		e.getScraper(name).SetRequestHeaders(c)
 		e.getScraper(name).DecodeResponse(c)
@@ -128,34 +124,4 @@ func (e *Engine) auth(account config.Account) {
 	fmt.Scanln(&authCode)
 	authData := map[string]string{"authCode": authCode}
 	_ = c.Post(constant.AuthenticationUrl, authData)
-}
-
-func deleteCookies(cookiesFile string) {
-	_, err := os.Stat(cookiesFile)
-	if os.IsNotExist(err) {
-		return
-	}
-	_ = os.Remove(cookiesFile)
-	logger.Infof("删除历史[%s]文件", cookiesFile)
-}
-
-func validateCookies(cookiesFile string) error {
-	_, err := os.Stat(cookiesFile)
-	if os.IsNotExist(err) {
-		logger.Errorf("不存在[%s]文件", cookiesFile)
-		return errors.ErrCookieNotFound
-	}
-	file, err := os.ReadFile(cookiesFile)
-	if err != nil {
-		return err
-	}
-	cookies := storage.UnstringifyCookies(string(file))
-	for _, v := range constant.CookieKeys {
-		if !storage.ContainsCookie(cookies, v) {
-			logger.Infof("存在[%s]文件,不匹配cookieKey[%s]", cookiesFile, v)
-			//_ = os.Remove(cookiesFile)
-			return errors.ErrCookieNonMatchKey
-		}
-	}
-	return nil
 }

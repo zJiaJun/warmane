@@ -6,7 +6,7 @@ import (
 	"gitub.com/zJiajun/warmane/logger"
 	"gitub.com/zJiajun/warmane/scraper/internal/decode"
 	"gitub.com/zJiajun/warmane/scraper/internal/extensions"
-	"gitub.com/zJiajun/warmane/scraper/internal/storage"
+	"gitub.com/zJiajun/warmane/scraper/storage"
 	"gorm.io/gorm"
 	"time"
 )

@@ -14,7 +14,7 @@ func Open() (db *gorm.DB, err error) {
 		Logger: logger.New(
 			log.New(os.Stdout, "[GORM]\u0020", log.Ldate|log.Lmicroseconds),
 			logger.Config{
-				SlowThreshold:             100 * time.Microsecond,
+				SlowThreshold:             100 * time.Millisecond,
 				Colorful:                  false,
 				IgnoreRecordNotFoundError: false,
 				ParameterizedQueries:      true,

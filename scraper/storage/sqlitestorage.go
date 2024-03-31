@@ -1,8 +1,13 @@
 package storage
 
 import (
+	"github.com/gocolly/colly/v2/storage"
+	"gitub.com/zJiajun/warmane/constant"
+	"gitub.com/zJiajun/warmane/errors"
+	"gitub.com/zJiajun/warmane/logger"
 	"gitub.com/zJiajun/warmane/model/table"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"net/url"
 )
 
@@ -47,5 +52,25 @@ func (s *SqliteStorage) Cookies(u *url.URL) string {
 
 func (s *SqliteStorage) SetCookies(u *url.URL, cookies string) {
 	ck := &table.Cookies{Host: u.Host, Name: s.name, Cookies: cookies}
-	s.db.Create(ck)
+	s.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "host"}, {Name: "name"}},
+		DoUpdates: clause.AssignmentColumns([]string{"cookies"}),
+	}).Create(ck)
+}
+
+func Validate(db *gorm.DB, name string) error {
+	var cookiesInDB string
+	db.Select("cookies").Model(&table.Cookies{}).Where("host = ?", constant.HOST).Where("name = ?", name).First(&cookiesInDB)
+	if cookiesInDB == "" {
+		return errors.ErrCookieNotFound
+	} else {
+		cookies := storage.UnstringifyCookies(cookiesInDB)
+		for _, v := range constant.CookieKeys {
+			if !storage.ContainsCookie(cookies, v) {
+				logger.Infof("cookies数据存在,但不匹配cookieKey[%s]", v)
+				return errors.ErrCookieNonMatchKey
+			}
+		}
+	}
+	return nil
 }
