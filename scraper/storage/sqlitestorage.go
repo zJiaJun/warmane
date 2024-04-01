@@ -58,6 +58,10 @@ func (s *SqliteStorage) SetCookies(u *url.URL, cookies string) {
 	}).Create(ck)
 }
 
+func Clear(db *gorm.DB, name string) error {
+	return db.Unscoped().Where("host = ?", constant.HOST).Where("name = ?", name).Delete(&table.Cookies{}).Error
+}
+
 func Validate(db *gorm.DB, name string) error {
 	var cookiesInDB string
 	db.Select("cookies").Model(&table.Cookies{}).Where("host = ?", constant.HOST).Where("name = ?", name).First(&cookiesInDB)

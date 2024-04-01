@@ -15,14 +15,21 @@ import (
 
 func (e *Engine) KeepSession() {
 	t := time.NewTicker(15 * time.Minute)
-	for {
-		select {
-		case <-t.C:
-			if err := e.login(e.config.Accounts[0]); err != nil {
-				logger.Errorf("账号[%s]登录错误, 原因: %v", e.config.Accounts[0].Username, err)
-			}
+	for ; true; <-t.C {
+		if err := e.login(e.config.Accounts[0]); err != nil {
+			logger.Errorf("账号[%s]登录错误, 原因: %v", e.config.Accounts[0].Username, err)
 		}
 	}
+	/*
+		for {
+			select {
+			case <-t.C:
+				if err := e.login(e.config.Accounts[0]); err != nil {
+					logger.Errorf("账号[%s]登录错误, 原因: %v", e.config.Accounts[0].Username, err)
+				}
+			}
+		}
+	*/
 }
 
 func (e *Engine) login(account config.Account) error {
@@ -47,6 +54,7 @@ func (e *Engine) login(account config.Account) error {
 		} else {
 			return err
 		}
+		_ = storage.Clear(e.db, name)
 		c := e.getScraper(name).CloneCollector()
 		e.getScraper(name).SetRequestHeaders(c)
 		e.getScraper(name).DecodeResponse(c)

@@ -18,7 +18,7 @@ func Open() (db *gorm.DB, err error) {
 				Colorful:                  false,
 				IgnoreRecordNotFoundError: false,
 				ParameterizedQueries:      true,
-				LogLevel:                  logger.Info,
+				LogLevel:                  logger.Error,
 			},
 		),
 		NowFunc: func() time.Time {
