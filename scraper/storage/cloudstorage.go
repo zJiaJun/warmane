@@ -1,4 +1,4 @@
-package engine
+package storage
 
 import (
 	"bytes"
@@ -17,27 +17,57 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 )
 
-const (
-	pkcs5SaltLen = 8
-	aes256KeyLen = 32
-)
+type CloudStorage struct {
+	apiUrl   string
+	uuid     string
+	password string
+}
 
-type CookieCloudBody struct {
+func NewCloudStorage(apiUrl string, uuid string, password string) *CloudStorage {
+	return &CloudStorage{apiUrl: apiUrl, uuid: uuid, password: password}
+}
+
+func (cs *CloudStorage) Init() error {
+
+	return nil
+}
+
+func (cs *CloudStorage) Visited(requestID uint64) error {
+
+	return nil
+}
+
+func (cs *CloudStorage) IsVisited(requestID uint64) (bool, error) {
+
+	return false, nil
+}
+
+func (cs *CloudStorage) Cookies(u *url.URL) string {
+	return cs.fetchCookies()
+}
+
+func (cs *CloudStorage) SetCookies(u *url.URL, cookies string) {
+
+}
+
+type cookieCloudBody struct {
 	Uuid      string `json:"uuid,omitempty"`
 	Encrypted string `json:"encrypted,omitempty"`
 }
 
-type CookieData struct {
+type cookieData struct {
 	Data struct {
-		Warmane []Warmane `json:"warmane"`
+		Warmane []warmane `json:"warmane"`
 	} `json:"cookie_data"`
 	UpdateTime time.Time `json:"update_time"`
 }
 
-type Warmane struct {
+type warmane struct {
 	Domain         string  `json:"domain"`
 	ExpirationDate float64 `json:"expirationDate"`
 	HostOnly       bool    `json:"hostOnly"`
@@ -51,18 +81,15 @@ type Warmane struct {
 	Value          string  `json:"value"`
 }
 
-func CookieStore() {
-	//apiUrl := strings.TrimSuffix(os.Getenv("COOKIE_CLOUD_HOST"), "/")
-	//uuid := os.Getenv("COOKIE_CLOUD_UUID")
-	//password := os.Getenv("COOKIE_CLOUD_PASSWORD")
-	apiUrl := "http://127.0.0.1:8088/cookie"
-	uuid := "j9DVZLA6HrbVU1izyZRcTA"
-	password := "xxwiSbvXWTMWPSM2TDj9g5"
+func (cs *CloudStorage) fetchCookies() string {
+	apiUrl := cs.apiUrl
+	uuid := cs.uuid
+	password := cs.password
 
 	if apiUrl == "" || uuid == "" || password == "" {
 		log.Fatalf("COOKIE_CLOUD_HOST, COOKIE_CLOUD_UUID and COOKIE_CLOUD_PASSWORD env must be set")
 	}
-	var data *CookieCloudBody
+	var data *cookieCloudBody
 	res, err := http.Get(apiUrl + "/get/" + uuid)
 	if err != nil {
 		log.Fatalf("Failed to request server: %v", err)
@@ -79,50 +106,50 @@ func CookieStore() {
 	if err != nil {
 		log.Fatalf("Failed to parse server response as json: %v", err)
 	}
-	keyPassword := Md5String(uuid, "-", password)[:16]
-	decrypted, err := DecryptCryptoJsAesMsg(keyPassword, data.Encrypted)
+	keyPassword := md5String(uuid, "-", password)[:16]
+	decrypted, err := decryptCryptoJsAesMsg(keyPassword, data.Encrypted)
 	if err != nil {
 		log.Fatalf("Failed to decrypt: %v", err)
 	}
 	fmt.Printf("Decrypted: %s\n", decrypted)
-	var cookieData *CookieData
+	var cookieData *cookieData
 	err = json.Unmarshal(decrypted, &cookieData)
 	if err != nil {
 		log.Fatalf("Failed to parse cookie response as json: %v", err)
 	}
-	// bb_lastvisit=1710812515; Path=/; Domain=warmane.com; Expires=Tue, 26 Mar 2024 01:41:55 GMT; Max-Age=604800
+	var b strings.Builder
 	for _, v := range cookieData.Data.Warmane {
 		for _, ck := range constant.CookieKeys {
-			if v.Name == ck {
-				var expires time.Time
-				if v.ExpirationDate > 0 {
-					sec, dec := math.Modf(v.ExpirationDate)
-					expires = time.Unix(int64(sec), int64(dec*(1e9)))
-				}
-				var maxAge int
-				if v.Name == "_wM" {
-					maxAge = 15552000
-				} else if v.Name != "PHPSESSID" {
-					maxAge = 604800
-				}
-
-				c := &http.Cookie{
-					Name:     v.Name,
-					Value:    v.Value,
-					Path:     v.Path,
-					Domain:   v.Domain,
-					Expires:  expires,
-					MaxAge:   maxAge,
-					Secure:   v.Secure,
-					HttpOnly: v.HttpOnly,
-					SameSite: http.SameSiteDefaultMode,
-				}
-				fmt.Println(c.String())
+			if v.Name != ck {
+				continue
 			}
+			var expires time.Time
+			if v.ExpirationDate > 0 {
+				sec, dec := math.Modf(v.ExpirationDate)
+				expires = time.Unix(int64(sec), int64(dec*(1e9)))
+			}
+			var maxAge int
+			if v.Name == "_wM" {
+				maxAge = 15552000
+			} else if v.Name != "PHPSESSID" {
+				maxAge = 604800
+			}
+
+			c := &http.Cookie{
+				Name:     v.Name,
+				Value:    v.Value,
+				Path:     v.Path,
+				Domain:   v.Domain,
+				Expires:  expires,
+				MaxAge:   maxAge,
+				Secure:   v.Secure,
+				HttpOnly: v.HttpOnly,
+				SameSite: http.SameSiteDefaultMode,
+			}
+			b.WriteString(c.String())
 		}
-
 	}
-
+	return b.String()
 }
 
 // Decrypt a CryptoJS.AES.encrypt(msg, password) encrypted msg.
@@ -133,7 +160,7 @@ func CookieStore() {
 // using md5 as hash type and 32 / 16 as length of key / block.
 // See: https://stackoverflow.com/questions/35472396/how-does-cryptojs-get-an-iv-when-none-is-specified ,
 // https://stackoverflow.com/questions/64797987/what-is-the-default-aes-config-in-crypto-js
-func DecryptCryptoJsAesMsg(password string, ciphertext string) ([]byte, error) {
+func decryptCryptoJsAesMsg(password string, ciphertext string) ([]byte, error) {
 	const keylen = 32
 	const blocklen = 16
 	rawEncrypted, err := base64.StdEncoding.DecodeString(ciphertext)
@@ -145,7 +172,7 @@ func DecryptCryptoJsAesMsg(password string, ciphertext string) ([]byte, error) {
 	}
 	salt := rawEncrypted[8:16]
 	encrypted := rawEncrypted[16:]
-	key, iv := BytesToKey(salt, []byte(password), md5.New(), keylen, blocklen)
+	key, iv := bytesToKey(salt, []byte(password), md5.New(), keylen, blocklen)
 	newCipher, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create aes cipher: %v", err)
@@ -160,11 +187,16 @@ func DecryptCryptoJsAesMsg(password string, ciphertext string) ([]byte, error) {
 	return decrypted, nil
 }
 
+const (
+	pkcs5SaltLen = 8
+	aes256KeyLen = 32
+)
+
 // From https://github.com/walkert/go-evp .
 // BytesToKey implements the Openssl EVP_BytesToKey logic.
 // It takes the salt, data, a hash type and the key/block length used by that type.
 // As such it differs considerably from the openssl method in C.
-func BytesToKey(salt, data []byte, h hash.Hash, keyLen, blockLen int) (key, iv []byte) {
+func bytesToKey(salt, data []byte, h hash.Hash, keyLen, blockLen int) (key, iv []byte) {
 	saltLen := len(salt)
 	if saltLen > 0 && saltLen != pkcs5SaltLen {
 		panic(fmt.Sprintf("Salt length is %d, expected %d", saltLen, pkcs5SaltLen))
@@ -186,17 +218,17 @@ func BytesToKey(salt, data []byte, h hash.Hash, keyLen, blockLen int) (key, iv [
 }
 
 // BytesToKeyAES256CBC implements the SHA256 version of EVP_BytesToKey using AES CBC
-func BytesToKeyAES256CBC(salt, data []byte) (key []byte, iv []byte) {
-	return BytesToKey(salt, data, sha256.New(), aes256KeyLen, aes.BlockSize)
+func bytesToKeyAES256CBC(salt, data []byte) (key []byte, iv []byte) {
+	return bytesToKey(salt, data, sha256.New(), aes256KeyLen, aes.BlockSize)
 }
 
 // BytesToKeyAES256CBCMD5 implements the MD5 version of EVP_BytesToKey using AES CBC
-func BytesToKeyAES256CBCMD5(salt, data []byte) (key []byte, iv []byte) {
-	return BytesToKey(salt, data, md5.New(), aes256KeyLen, aes.BlockSize)
+func bytesToKeyAES256CBCMD5(salt, data []byte) (key []byte, iv []byte) {
+	return bytesToKey(salt, data, md5.New(), aes256KeyLen, aes.BlockSize)
 }
 
 // return the MD5 hex hash string (lower-case) of input string(s)
-func Md5String(inputs ...string) string {
+func md5String(inputs ...string) string {
 	keyHash := md5.New()
 	for _, str := range inputs {
 		io.WriteString(keyHash, str)
