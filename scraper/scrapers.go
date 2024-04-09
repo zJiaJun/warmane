@@ -1,7 +1,7 @@
 package scraper
 
 import (
-	"gitub.com/zJiajun/warmane/config"
+	"github.com/zJiajun/warmane/config"
 	"gorm.io/gorm"
 )
 

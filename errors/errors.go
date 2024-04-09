@@ -2,7 +2,7 @@ package errors
 
 import (
 	"errors"
-	"gitub.com/zJiajun/warmane/logger"
+	"github.com/zJiajun/warmane/logger"
 )
 
 var (

@@ -3,11 +3,11 @@ package engine
 import (
 	"encoding/json"
 	"github.com/gocolly/colly/v2"
-	"gitub.com/zJiajun/warmane/config"
-	"gitub.com/zJiajun/warmane/constant"
-	"gitub.com/zJiajun/warmane/logger"
-	"gitub.com/zJiajun/warmane/model"
-	"gitub.com/zJiajun/warmane/model/table"
+	"github.com/zJiajun/warmane/config"
+	"github.com/zJiajun/warmane/constant"
+	"github.com/zJiajun/warmane/logger"
+	"github.com/zJiajun/warmane/model"
+	"github.com/zJiajun/warmane/model/table"
 	"strings"
 	"time"
 )
@@ -19,7 +19,7 @@ func (e *Engine) RunDailyPoints() {
 	e.wg.Add(count)
 	logger.Infof("开始goroutine并发处理")
 	for _, v := range e.config.Accounts {
-		go e.collectPoints(v)
+		e.collectPoints(v)
 	}
 	e.wg.Wait()
 }

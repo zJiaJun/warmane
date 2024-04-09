@@ -1,7 +1,7 @@
 package config
 
 import (
-	"gitub.com/zJiajun/warmane/errors"
+	"github.com/zJiajun/warmane/errors"
 	"gopkg.in/yaml.v3"
 	"os"
 )

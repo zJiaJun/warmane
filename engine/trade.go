@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
-	"gitub.com/zJiajun/warmane/config"
-	"gitub.com/zJiajun/warmane/constant"
-	"gitub.com/zJiajun/warmane/engine/internal"
-	"gitub.com/zJiajun/warmane/logger"
-	"gitub.com/zJiajun/warmane/model"
-	"gitub.com/zJiajun/warmane/model/table"
+	"github.com/zJiajun/warmane/config"
+	"github.com/zJiajun/warmane/constant"
+	"github.com/zJiajun/warmane/engine/internal"
+	"github.com/zJiajun/warmane/logger"
+	"github.com/zJiajun/warmane/model"
+	"github.com/zJiajun/warmane/model/table"
 	"gorm.io/gorm/clause"
 	"strconv"
 	"strings"
@@ -149,8 +149,8 @@ func (e *Engine) storeTradeData(name string, trades []*table.TradeInfo) error {
 	}
 	logger.Infof("商场角色交易数据写入成功, %d", r.RowsAffected)
 	return nil
-
 }
+
 func (e *Engine) fillCharacterDetail(name string, ti *table.TradeInfo) error {
 	armoryApiUrl := strings.ReplaceAll(ti.ArmoryUrl, "armory.warmane.com", "armory.warmane.com/api")
 	c := e.getScraper(name).CloneCollector()

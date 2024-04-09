@@ -1,7 +1,7 @@
 package table
 
 import (
-	"gitub.com/zJiajun/warmane/model"
+	"github.com/zJiajun/warmane/model"
 	"gorm.io/gorm"
 	"time"
 )

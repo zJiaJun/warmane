@@ -2,9 +2,9 @@ package storage
 
 import (
 	"github.com/gocolly/colly/v2/storage"
-	"gitub.com/zJiajun/warmane/constant"
-	"gitub.com/zJiajun/warmane/errors"
-	"gitub.com/zJiajun/warmane/logger"
+	"github.com/zJiajun/warmane/constant"
+	"github.com/zJiajun/warmane/errors"
+	"github.com/zJiajun/warmane/logger"
 	"net/url"
 	"os"
 )

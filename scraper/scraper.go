@@ -2,11 +2,11 @@ package scraper
 
 import (
 	"github.com/gocolly/colly/v2"
-	"gitub.com/zJiajun/warmane/constant"
-	"gitub.com/zJiajun/warmane/logger"
-	"gitub.com/zJiajun/warmane/scraper/internal/decode"
-	"gitub.com/zJiajun/warmane/scraper/internal/extensions"
-	"gitub.com/zJiajun/warmane/scraper/storage"
+	"github.com/zJiajun/warmane/constant"
+	"github.com/zJiajun/warmane/logger"
+	"github.com/zJiajun/warmane/scraper/internal/decode"
+	"github.com/zJiajun/warmane/scraper/internal/extensions"
+	"github.com/zJiajun/warmane/scraper/storage"
 	"gorm.io/gorm"
 	"time"
 )

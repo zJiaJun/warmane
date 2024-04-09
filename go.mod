@@ -1,4 +1,4 @@
-module gitub.com/zJiajun/warmane
+module github.com/zJiajun/warmane
 
 go 1.22.1
 

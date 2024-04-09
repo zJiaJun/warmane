@@ -1,11 +1,11 @@
 package engine
 
 import (
-	"gitub.com/zJiajun/warmane/config"
-	"gitub.com/zJiajun/warmane/database"
-	"gitub.com/zJiajun/warmane/logger"
-	"gitub.com/zJiajun/warmane/model/table"
-	"gitub.com/zJiajun/warmane/scraper"
+	"github.com/zJiajun/warmane/config"
+	"github.com/zJiajun/warmane/database"
+	"github.com/zJiajun/warmane/logger"
+	"github.com/zJiajun/warmane/model/table"
+	"github.com/zJiajun/warmane/scraper"
 	"gorm.io/gorm"
 	"sync"
 )

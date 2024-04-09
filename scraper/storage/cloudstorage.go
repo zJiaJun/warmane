@@ -11,7 +11,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gitub.com/zJiajun/warmane/constant"
+	"github.com/zJiajun/warmane/constant"
 	"hash"
 	"io"
 	"log"

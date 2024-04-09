@@ -3,7 +3,7 @@ package captcha
 import (
 	"fmt"
 	api2captcha "github.com/2captcha/2captcha-go"
-	"gitub.com/zJiajun/warmane/logger"
+	"github.com/zJiajun/warmane/logger"
 	"time"
 )
 
