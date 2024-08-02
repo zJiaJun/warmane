@@ -36,7 +36,7 @@ func (e *Engine) RunTradeData() {
 	}
 }
 
-func (e *Engine) trade(account config.Account) error {
+func (e *Engine) trade(account *config.Account) error {
 	trades, err := e.fetchTradeData(account)
 	if err != nil {
 		return err
@@ -48,7 +48,7 @@ func (e *Engine) trade(account config.Account) error {
 	return nil
 }
 
-func (e *Engine) fetchTradeData(account config.Account) ([]*table.TradeInfo, error) {
+func (e *Engine) fetchTradeData(account *config.Account) ([]*table.TradeInfo, error) {
 	name := account.Username
 	c := e.getScraper(name).CloneCollector()
 	e.getScraper(name).SetRequestHeaders(c)

@@ -24,7 +24,7 @@ func (e *Engine) RunDailyPoints() {
 	e.wg.Wait()
 }
 
-func (e *Engine) collectPoints(account config.Account) {
+func (e *Engine) collectPoints(account *config.Account) {
 	defer e.wg.Done()
 	if err := e.login(account); err != nil {
 		logger.Errorf("账号[%s]登录错误, 原因: %v", account.Username, err)
@@ -36,7 +36,7 @@ func (e *Engine) collectPoints(account config.Account) {
 	}
 }
 
-func (e *Engine) collect(account config.Account) error {
+func (e *Engine) collect(account *config.Account) error {
 	name := account.Username
 	c := e.getScraper(name).CloneCollector()
 	e.getScraper(name).SetRequestHeaders(c)
@@ -80,7 +80,7 @@ func (e *Engine) collect(account config.Account) error {
 	return err
 }
 
-func (e *Engine) fetchAccountInfo(account config.Account) (*model.Account, error) {
+func (e *Engine) fetchAccountInfo(account *config.Account) (*model.Account, error) {
 	acc := &model.Account{}
 	name := account.Username
 	acc.Name = name

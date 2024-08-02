@@ -6,18 +6,17 @@ import (
 	"os"
 )
 
-type (
-	Config struct {
-		CaptchaApiKey   string    `yaml:"captchaApiKey"`
-		WarmaneSiteKey  string    `yaml:"warmaneSiteKey"`
-		UseCookiesLogin bool      `yaml:"useCookiesLogin"`
-		Accounts        []Account `yaml:"accounts"`
-	}
-	Account struct {
-		Username string `yaml:"username"`
-		Password string `yaml:"password"`
-	}
-)
+type Config struct {
+	CaptchaApiKey   string     `yaml:"captchaApiKey"`
+	WarmaneSiteKey  string     `yaml:"warmaneSiteKey"`
+	UseCookiesLogin bool       `yaml:"useCookiesLogin"`
+	Accounts        []*Account `yaml:"accounts"`
+}
+
+type Account struct {
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+}
 
 func Load(cfg string) (*Config, error) {
 	file, err := os.ReadFile(cfg)

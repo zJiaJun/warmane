@@ -9,7 +9,7 @@ type Scrapers struct {
 	sc map[string]*Scraper
 }
 
-func New(accounts []config.Account, db *gorm.DB) *Scrapers {
+func New(accounts []*config.Account, db *gorm.DB) *Scrapers {
 	m := make(map[string]*Scraper, len(accounts))
 	for _, v := range accounts {
 		m[v.Username] = newScraper(v.Username, db)
