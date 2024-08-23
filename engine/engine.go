@@ -11,17 +11,14 @@ import (
 )
 
 type Engine struct {
-	config   *config.Config
 	scrapers *scraper.Scrapers
 	db       *gorm.DB
 	wg       sync.WaitGroup
+	//TODO: will be deleted
+	config *config.Config
 }
 
-func New(cfg string) *Engine {
-	conf, err := config.Load(cfg)
-	if err != nil {
-		logger.Fatal(err)
-	}
+func New() *Engine {
 	db, err := database.Open()
 	if err != nil {
 		logger.Fatal(err)
@@ -29,20 +26,35 @@ func New(cfg string) *Engine {
 	if err = autoMigrate(db); err != nil {
 		logger.Fatal(err)
 	}
-	return &Engine{
-		config:   conf,
-		scrapers: scraper.New(conf.Accounts, db),
+	e := &Engine{
+		scrapers: scraper.New(db),
 		db:       db,
+	}
+	e.init()
+	return e
+}
+
+func (e *Engine) init() {
+	accounts, err := e.ListOnlineAccount()
+	if err != nil {
+		logger.Error("init scrapers err:", err)
+		return
+	}
+	for _, account := range accounts {
+		e.scrapers.GetOrPut(account.AccountName)
+		go e.keepingAccountOnline(int64(account.ID))
 	}
 }
 
 func (e *Engine) getScraper(name string) *scraper.Scraper {
-	return e.scrapers.Get(name)
+	return e.scrapers.GetOrPut(name)
 }
 
 func autoMigrate(db *gorm.DB) error {
 	return db.AutoMigrate(
-		&table.DailyPoint{},
+		&table.Account{},
+		&table.AccountDetails{},
 		&table.TradeInfo{},
+		&table.Visited{},
 	)
 }

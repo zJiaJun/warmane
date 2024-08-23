@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
+	"github.com/zJiajun/warmane/common"
 	"github.com/zJiajun/warmane/config"
 	"github.com/zJiajun/warmane/constant"
-	"github.com/zJiajun/warmane/engine/internal"
 	"github.com/zJiajun/warmane/logger"
 	"github.com/zJiajun/warmane/model"
 	"github.com/zJiajun/warmane/model/table"
@@ -16,11 +16,11 @@ import (
 )
 
 var (
-	frostwolfRealm = &internal.Pair[string, string]{Left: "4", Right: "Frostwolf"}
-	lordaeronRealm = &internal.Pair[string, string]{Left: "6", Right: "Lordaeron"}
-	icecrownRealm  = &internal.Pair[string, string]{Left: "7", Right: "Icecrown"}
-	blackrockRealm = &internal.Pair[string, string]{Left: "10", Right: "Blackrock"}
-	onyxiaRealm    = &internal.Pair[string, string]{Left: "14", Right: "Onyxia"}
+	frostwolfRealm = &common.Pair[string, string]{Left: "4", Right: "Frostwolf"}
+	lordaeronRealm = &common.Pair[string, string]{Left: "6", Right: "Lordaeron"}
+	icecrownRealm  = &common.Pair[string, string]{Left: "7", Right: "Icecrown"}
+	blackrockRealm = &common.Pair[string, string]{Left: "10", Right: "Blackrock"}
+	onyxiaRealm    = &common.Pair[string, string]{Left: "14", Right: "Onyxia"}
 )
 
 func (e *Engine) RunTradeData() {

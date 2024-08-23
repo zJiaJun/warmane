@@ -1,0 +1,16 @@
+{{ template "header.html" .}}
+
+{{ template "menu.html" .}}
+
+<div class="d-flex align-items-center justify-content-center vh-100">
+    <div class="text-center">
+        <h1 class="display-1 fw-bold">{{ .Data.Code  }}</h1>
+        <p class="fs-3"> <span class="text-danger">Opps!</span> {{ .Data.Title }}</p>
+        <p class="lead">
+            {{ .Data.Msg }}
+        </p>
+        <a class="btn bsb-btn-5xl btn-dark rounded-pill px-5 fs-6 m-3" href="/" role="button">Back to Home</a>
+    </div>
+</div>
+
+{{ template "footer.html" .}}

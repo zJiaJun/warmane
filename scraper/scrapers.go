@@ -1,22 +1,22 @@
 package scraper
 
-import (
-	"github.com/zJiajun/warmane/config"
-	"gorm.io/gorm"
-)
+import "gorm.io/gorm"
 
 type Scrapers struct {
 	sc map[string]*Scraper
+	db *gorm.DB
 }
 
-func New(accounts []*config.Account, db *gorm.DB) *Scrapers {
-	m := make(map[string]*Scraper, len(accounts))
-	for _, v := range accounts {
-		m[v.Username] = newScraper(v.Username, db)
+func New(db *gorm.DB) *Scrapers {
+	return &Scrapers{
+		sc: make(map[string]*Scraper),
+		db: db,
 	}
-	return &Scrapers{sc: m}
 }
 
-func (s *Scrapers) Get(name string) *Scraper {
+func (s *Scrapers) GetOrPut(name string) *Scraper {
+	if _, ok := s.sc[name]; !ok {
+		s.sc[name] = newScraper(name, s.db)
+	}
 	return s.sc[name]
 }

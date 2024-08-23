@@ -59,7 +59,7 @@ func (s *Scraper) SetRequestHeaders(c *colly.Collector) {
 			e := c.Clone()
 			e.OnHTML("meta[name='csrf-token']", func(element *colly.HTMLElement) {
 				s.csrfToken = element.Attr("content")
-				logger.Infof("查询获取warmane网站的csrfToken成功: %s", s.csrfToken)
+				logger.Infof("Query csrf-token success: %s", s.csrfToken)
 			})
 			_ = e.Visit(constant.BaseUrl)
 		}
