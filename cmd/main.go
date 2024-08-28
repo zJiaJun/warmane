@@ -4,36 +4,29 @@ import (
 	"flag"
 	"github.com/zJiajun/warmane/engine"
 	"github.com/zJiajun/warmane/logger"
+	"github.com/zJiajun/warmane/route"
+	"net"
 	"os"
+	"sync"
 )
 
 var goflag = flag.NewFlagSet("warmane", flag.ExitOnError)
-var (
-	config      string
-	points      bool
-	trade       bool
-	keepSession bool
-)
+
+var port string
 
 func init() {
-	goflag.StringVar(&config, "c", "config.yml", "Configuration file")
-	goflag.BoolVar(&points, "p", false, "Run daily collect points")
-	goflag.BoolVar(&trade, "t", false, "Run scraper trade data")
-	goflag.BoolVar(&keepSession, "k", false, "Run keep session job")
+	goflag.StringVar(&port, "p", "8070", "Port to listen on")
 	goflag.Parse(os.Args[1:])
 }
 
+var onceMap = make(map[int]sync.Once)
+
 func main() {
 	logger.Info("Main engine start")
-	e := engine.New(config)
-	if points {
-		e.RunDailyPoints()
+	e := engine.New()
+	r := route.New(e)
+	addr := net.JoinHostPort("", port)
+	if err := r.Run(addr); err != nil {
+		logger.Fatal(err)
 	}
-	if trade {
-		e.RunTradeData()
-	}
-	if keepSession {
-		e.KeepSession()
-	}
-	logger.Info("Main engine finish")
 }

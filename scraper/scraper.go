@@ -2,9 +2,6 @@ package scraper
 
 import (
 	"github.com/gocolly/colly/v2"
-	"github.com/zJiajun/warmane/constant"
-	"github.com/zJiajun/warmane/logger"
-	"github.com/zJiajun/warmane/scraper/internal/decode"
 	"github.com/zJiajun/warmane/scraper/internal/extensions"
 	"github.com/zJiajun/warmane/scraper/storage"
 	"gorm.io/gorm"
@@ -34,20 +31,16 @@ func newScraper(name string, db *gorm.DB) *Scraper {
 	}); err != nil {
 		panic(err)
 	}
-	/*
-		if err := s.c.SetStorage(storage.NewDiskStorage(name)); err != nil {
-			panic(err)
-		}
-	*/
 	if err := s.c.SetStorage(storage.NewSqliteStorage(name, db)); err != nil {
 		panic(err)
 	}
 	return s
 }
 
+/*
 func (s *Scraper) SetRequestHeaders(c *colly.Collector) {
 	c.OnRequest(func(request *colly.Request) {
-		request.Headers.Set("Accept", "application/json, text/javascript, */*; q=0.01")
+		request.Headers.Set("Accept", "application/json, text/javascript")
 		request.Headers.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8,zh-TW;q=0.7")
 		request.Headers.Set("Accept-Encoding", "gzip, deflate, br")
 		request.Headers.Set("Cache-Control", "no-cache")
@@ -59,7 +52,7 @@ func (s *Scraper) SetRequestHeaders(c *colly.Collector) {
 			e := c.Clone()
 			e.OnHTML("meta[name='csrf-token']", func(element *colly.HTMLElement) {
 				s.csrfToken = element.Attr("content")
-				logger.Infof("查询获取warmane网站的csrfToken成功: %s", s.csrfToken)
+				logger.Infof("Query csrf-token success: %s", s.csrfToken)
 			})
 			_ = e.Visit(constant.BaseUrl)
 		}
@@ -67,7 +60,9 @@ func (s *Scraper) SetRequestHeaders(c *colly.Collector) {
 		request.Headers.Set("X-Requested-With", "XMLHttpRequest")
 	})
 }
+*/
 
+/*
 func (s *Scraper) DecodeResponse(c *colly.Collector) {
 	c.OnResponse(func(response *colly.Response) {
 		encoding := response.Headers.Get("Content-Encoding")
@@ -82,6 +77,7 @@ func (s *Scraper) DecodeResponse(c *colly.Collector) {
 		response.Body = decodeResp
 	})
 }
+*/
 
 func (s *Scraper) CloneCollector() *colly.Collector {
 	return s.c.Clone()

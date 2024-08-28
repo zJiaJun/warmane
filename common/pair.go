@@ -1,4 +1,4 @@
-package internal
+package common
 
 type Pair[T, U any] struct {
 	Left  T

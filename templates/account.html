@@ -1,0 +1,344 @@
+{{ template "header.html" .}}
+
+{{ template "menu.html" .}}
+
+<main class="container my-5">
+    <div class="card">
+        <div class="card-header">
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addAccountModal">
+                Add Account
+            </button>
+        </div>
+        <div class="card-body">
+        <table class="table table-hover align-middle">
+            <thead>
+            <tr class="table-secondary">
+                <th scope="col" class="col-1">AccountName</th>
+<!--                <th scope="col" class="col-1">Password</th>-->
+                <th scope="col" class="col-3">Cookies</th>
+                <th scope="col" class="col-1">Status</th>
+                <th scope="col" class="col-2">CreatedAt</th>
+                <th scope="col" class="col-2"></th>
+            </tr>
+            </thead>
+            {{ if eq (len .Data) 0 }}
+                <tbody></tbody>
+            {{ else }}
+            <tbody>
+                {{ range .Data }}
+                <tr>
+                    <td>{{ .AccountName }}</td>
+<!--                    <td>{{ .Password }}</td>-->
+                    <td class="text-truncate" style="max-width: 150px"
+                        data-bs-toggle="popover" data-bs-placement="bottom" data-bs-trigger="hover"
+                        data-bs-title="Content" data-bs-content={{ .Cookies }}>{{ .Cookies }}</td>
+                    <td>{{ .Status }}</td>
+                    <td>{{ .CreatedAt | formatAsDate}}</td>
+                    <td>
+                        <button type="button" class="btn btn-outline-success btn-sm"
+                                data-account-id="{{ .ID }}" onclick="checkAccount(this)">Check</button>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                Action
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item"
+                                       data-bs-toggle="modal" data-bs-target="#updateAccountModal"
+                                       data-account-id="{{ .ID }}" data-account-name="{{ .AccountName }}" data-account-cookies="{{ .Cookies }}">Edit</a>
+<!--                                       data-account-password="{{ .Password }}" -->
+                                </li>
+                                <li>
+                                    <a class="dropdown-item"
+                                       data-bs-toggle="modal" data-bs-target="#deleteAccountModal"
+                                       data-account-id="{{ .ID }}" data-account-name="{{ .AccountName }}">Delete</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                {{ end }}
+            {{ end }}
+            </tbody>
+        </table>
+        </div>
+        <div class="card-footer">
+            &nbsp;
+        </div>
+    </div>
+
+    <div class="modal fade" id="addAccountModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5">Add Account</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addAccountForm" class="needs-validation" novalidate>
+                        <div class="mb-3">
+                            <label for="addAccountName" class="form-label">AccountName</label>
+                            <input type="text" placeholder="Enter the accountName" class="form-control" id="addAccountName" name="AccountName" aria-describedby="AccountNameHelp" required>
+                            <div class="valid-feedback">Looks good!</div>
+                            <div class="invalid-feedback"> Enter the accountName.</div>
+                        </div>
+                        <!--
+                        <div class="mb-3">
+                            <label for="addPassword" class="form-label">Password</label>
+                            <input type="password" placeholder="Enter the password" class="form-control" id="addPassword" name="Password" aria-describedby="PasswordHelp" required>
+                            <div class="valid-feedback">Looks good!</div>
+                            <div class="invalid-feedback">Enter the password.</div>
+                        </div>
+                        -->
+                        <div class="mb-3">
+                            <label for="addCookies" class="form-label">Cookies</label>
+                            <textarea class="form-control" placeholder="Enter the cookies" rows="10" id="addCookies" name="Cookies" aria-describedby="CookiesHelp" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary"  onclick="createAccount()">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="updateAccountModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5">Update Account</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="updateAccountForm" class="needs-validation" novalidate>
+                        <input type="hidden" id="updateAccountID" name="updateAccountID" value="">
+                        <div class="mb-3">
+                            <label for="updateAccountName" class="form-label">AccountName</label>
+                            <input type="text" placeholder="Enter the accountName" class="form-control" id="updateAccountName" name="AccountName" aria-describedby="AccountNameHelp" required>
+                            <div class="valid-feedback">Looks good!</div>
+                            <div class="invalid-feedback"> Enter the accountName.</div>
+                        </div>
+                        <!--
+                        <div class="mb-3">
+                            <label for="updatePassword" class="form-label">Password</label>
+                            <input type="password" placeholder="Enter the password" class="form-control" id="updatePassword" name="Password" aria-describedby="PasswordHelp" required>
+                            <div class="valid-feedback">Looks good!</div>
+                            <div class="invalid-feedback">Enter the password.</div>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" value="" id="togglePassword" onclick="showPassword()">
+                            <label class="form-check-label" for="togglePassword">
+                                Show Password
+                            </label>
+                        </div>
+                        -->
+                        <div class="mb-3">
+                            <label for="updateCookies" class="form-label">Cookies</label>
+                            <textarea class="form-control" rows="10" id="updateCookies" name="Cookies" aria-describedby="CookiesHelp" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary"  onclick="updateAccount()">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteAccountModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5 text-danger">Delete Account</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this account?</p>
+                    <input type="hidden" id="deleteAccountID" name="deleteAccountID" value="">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary"  onclick="deleteAccount()">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container top-0 end-0 mt-5" >
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" id="accountToast">
+            <div class="toast-header">
+                <strong class="me-auto">Tips</strong>
+                <small>just now</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body"></div>
+        </div>
+    </div>
+
+</main>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(event) {
+
+        const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
+        const popoverList = [...popoverTriggerList].map(popoverTriggerEl =>
+            new bootstrap.Popover(popoverTriggerEl, {
+                customClass: 'cookie-popover',
+                placement: 'bottom',
+                fallbackPlacements: ['bottom', 'left', 'right', 'top'],
+            }))
+
+        const deleteAccountModal = document.getElementById('deleteAccountModal')
+        if (deleteAccountModal) {
+            deleteAccountModal.addEventListener('show.bs.modal', function (event) {
+                const target = event.relatedTarget
+                const accountId = target.getAttribute('data-account-id')
+                const accountName = target.getAttribute('data-account-name')
+                const modalTitle = deleteAccountModal.querySelector('.modal-title')
+                const deleteAccountIdInput = document.getElementById('deleteAccountID')
+                modalTitle.textContent = `Delete Account ${accountName}`
+                deleteAccountIdInput.value = accountId
+            })
+        }
+        const updateAccountModal = document.getElementById('updateAccountModal')
+        if (updateAccountModal) {
+            updateAccountModal.addEventListener('show.bs.modal', function (event) {
+                const target = event.relatedTarget
+                const accountId = target.getAttribute('data-account-id')
+                const accountName = target.getAttribute('data-account-name')
+                // const accountPassword = target.getAttribute('data-account-password')
+                const accountCookies = target.getAttribute('data-account-cookies')
+                const updateAccountIdInput = document.getElementById('updateAccountID')
+                const accountNameInput = updateAccountModal.querySelector('.modal-body input[name="AccountName"]')
+                // const passwordInput = updateAccountModal.querySelector('.modal-body input[name="Password"]')
+                const cookieTextarea = updateAccountModal.querySelector('.modal-body textarea[name="Cookies"]')
+                updateAccountIdInput.value = accountId
+                accountNameInput.value = accountName
+                // passwordInput.value = accountPassword
+                cookieTextarea.value = accountCookies
+            })
+            /*
+            updateAccountModal.addEventListener('hidden.bs.modal', function (event) {
+                document.getElementById('updatePassword').type = 'password'
+                document.getElementById('togglePassword').checked = false
+            })
+             */
+        }
+    });
+
+    function showTips(msg) {
+        const toastEl = document.getElementById('accountToast')
+        const toast = bootstrap.Toast.getOrCreateInstance(toastEl,{
+            animation: true,
+            autohide: true,
+            delay: 5000,
+        })
+        const toastBody = toastEl.querySelector('.toast-body')
+        toastBody.textContent = msg
+        toast.show()
+    }
+
+    function createAccount() {
+        const form = document.getElementById('addAccountForm')
+        form.classList.add('was-validated')
+        if (!form.checkValidity()) {
+            return false;
+        }
+        const formData = new FormData(form)
+        const data = {};
+        for (let pair of formData.entries()) {
+            data[pair[0]] = pair[1];
+        }
+        instance.post('/account', data)
+            .then(response => {
+                if (response.status === 200 && response.data.code === 200) {
+                    bootstrap.Modal.getInstance(document.getElementById('addAccountModal')).hide();
+                    location.reload();
+                } else {
+                    showTips(response.data.msg)
+                }
+            })
+            .catch(error => {
+                console.log(error);
+            });
+    }
+
+    function updateAccount() {
+        const accountId = document.getElementById('updateAccountID').value
+        const form = document.getElementById('updateAccountForm')
+        form.classList.add('was-validated')
+        if (!form.checkValidity()) {
+            return false;
+        }
+        const formData = new FormData(form)
+        const data = {};
+        for (let pair of formData.entries()) {
+            data[pair[0]] = pair[1];
+        }
+        instance.put('/account/' + accountId, data)
+            .then(response => {
+                if (response.status === 200 && response.data.code === 200) {
+                    bootstrap.Modal.getInstance(document.getElementById('updateAccountModal')).hide();
+                    location.reload();
+                } else {
+                    showTips(response.data.msg)
+                }
+            })
+            .catch(error => {
+                console.log(error);
+            })
+
+    }
+
+    /*
+    function showPassword() {
+        const passwordInput = document.getElementById('updatePassword')
+        passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password'
+    }
+     */
+
+
+    function deleteAccount() {
+        const accountId = document.getElementById('deleteAccountID').value
+        instance.delete('/account/' + accountId)
+            .then(response => {
+                if (response.status === 200 && response.data.code === 200) {
+                    bootstrap.Modal.getInstance(document.getElementById('deleteAccountModal')).hide();
+                    location.reload();
+                } else {
+                    showTips(response.data.msg)
+                }
+            })
+            .catch(error => {
+                console.log(error);
+            })
+    }
+
+    function checkAccount(element) {
+        const accountId = element.getAttribute('data-account-id')
+        element.disabled = true
+        element.innerHTML =
+            '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span>' +
+            '<span role="status">Checking...</span>'
+        instance.get('/account/' + accountId + '/check')
+            .then(response => {
+                if (response.status === 200 && response.data.code === 200 && response.data.data === true) {
+                    location.reload();
+                } else {
+                    showTips(response.data.msg)
+                }
+            })
+            .catch(error => {
+                console.log(error);
+            }).finally(() => {
+                element.disabled = false
+                element.innerHTML = 'Check'
+
+        })
+    }
+</script>
+{{ template "footer.html" .}}

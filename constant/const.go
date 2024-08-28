@@ -20,6 +20,14 @@ const (
 	LogoutUrl         = AccountUrl + "/logout"
 )
 
+const WarmaneSiteKey = "6LfXRRsUAAAAAEApnVwrtQ7aFprn4naEcc05AZUR"
+const CaptchaApiKey = ""
+
+const (
+	ONLINE_STATUS  = "online"
+	OFFLINE_STATUS = "offline"
+)
+
 var CookieFileName = func(name string) string {
 	return name + ".cookies"
 }

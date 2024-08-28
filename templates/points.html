@@ -1,0 +1,140 @@
+{{ template "header.html" .}}
+
+{{ template "menu.html" .}}
+
+<div class="container">
+    {{ if eq (len .Data) 0 }}
+        <h1 class="my-5">Account must be checked before seeing points.</h1>
+    {{ else }}
+        {{ range .Data }}
+            <div class="row my-5">
+                {{ if .Left }}
+                <div class="col">
+                    <div class="card shadow">
+                        <h5 class="card-header">{{ .Left.AccountName }}</h5>
+                        <div class="card-body">
+                            <p class="card-text text-danger fw-bold font-monospace">Coins: {{ .Left.Coins }}</p>
+                            <p class="card-text text-danger fw-bold font-monospace">Points: {{ .Left.Points }}</p>
+                            <p class="card-text fw-bold font-monospace">Email: {{ .Left.Email }}</p>
+                            <p class="card-text fw-bold font-monospace">Status: {{ .Left.Status }}</p>
+                            <p class="card-text fw-bold font-monospace">DonationRank: {{ .Left.DonationRank }}</p>
+                            <p class="card-text fw-bold font-monospace">ActivityRank: {{ .Left.ActivityRank }}</p>
+                            <p class="card-text fw-bold font-monospace">CommunityRank: {{ .Left.CommunityRank }}</p>
+                            <p class="card-text fw-bold font-monospace">JoinDate: {{ .Left.JoinDate }}</p>
+                            <button type="button" class="btn btn-outline-primary"
+                                    data-account-id="{{ .Left.AccountId }}" onclick="collectPoints(this)">Collect Points</button>
+                            <button type="button" class="btn btn-outline-primary"
+                                    data-account-id="{{ .Left.AccountId }}" onclick="refreshAccount(this)">Refresh</button>
+
+                        </div>
+                        <div class="card-footer">
+                            {{ .Left.LastSeen }}
+                        </div>
+                    </div>
+                </div>
+                {{ end }}
+
+                {{ if .Right }}
+                    <div class="col">
+                        <div class="card shadow">
+                            <h5 class="card-header">{{ .Right.AccountName }}</h5>
+                            <div class="card-body">
+                                <p class="card-text text-danger fw-bold font-monospace">Coins: {{ .Right.Coins }}</p>
+                                <p class="card-text text-danger fw-bold font-monospace">Points: {{ .Right.Points }}</p>
+                                <p class="card-text fw-bold">Email: {{ .Right.Email }}</p>
+                                <p class="card-text fw-bold font-monospace">Status: {{ .Right.Status }}</p>
+                                <p class="card-text fw-bold font-monospace">DonationRank: {{ .Right.DonationRank }}</p>
+                                <p class="card-text fw-bold font-monospace">ActivityRank: {{ .Right.ActivityRank }}</p>
+                                <p class="card-text fw-bold font-monospace">CommunityRank: {{ .Right.CommunityRank }}</p>
+                                <p class="card-text fw-bold font-monospace">JoinDate: {{ .Right.JoinDate }}</p>
+                                <button type="button" class="btn btn-outline-primary"
+                                        data-account-id="{{ .Right.AccountId }}" onclick="collectPoints(this)">Collect Points</button>
+                                <button type="button" class="btn btn-outline-primary"
+                                        data-account-id="{{ .Right.AccountId }}" onclick="refreshAccount(this)">Refresh</button>
+                            </div>
+                            <div class="card-footer">
+                                {{ .Right.LastSeen }}
+                            </div>
+                        </div>
+                    </div>
+                {{ else }}
+                    <div class="col"></div>
+                {{ end }}
+            </div>
+        {{ end }}
+    {{ end }}
+
+    <div class="toast-container top-0 end-0 mt-5" >
+        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true" id="pointsToast">
+            <div class="toast-header">
+                <strong class="me-auto">Tips</strong>
+                <small>just now</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body"></div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+
+    function showTips(msg) {
+        const toastEl = document.getElementById('pointsToast')
+        const toast = bootstrap.Toast.getOrCreateInstance(toastEl,{
+            animation: true,
+            autohide: true,
+            delay: 5000,
+        })
+        const toastBody = toastEl.querySelector('.toast-body')
+        toastBody.textContent = msg
+        toast.show()
+    }
+
+    function collectPoints(element) {
+        const accountId = element.getAttribute("data-account-id");
+        element.disabled = true
+        element.innerHTML =
+            '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span>' +
+            '<span role="status">Collecting...</span>'
+        instance.get('/points/' + accountId + '/collect')
+            .then(response => {
+                if (response.status === 200 && response.data.code === 200 && response.data.data === true) {
+                    location.reload();
+                } else {
+                    showTips(response.data.msg)
+                }
+            })
+            .catch(error => {
+                console.log(error)
+            }).finally(() => {
+            element.disabled = false
+            element.innerHTML = 'Collect Points'
+        })
+    }
+
+    function refreshAccount(element) {
+        const accountId = element.getAttribute("data-account-id");
+        element.disabled = true
+        element.innerHTML =
+            '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span>' +
+            '<span role="status">Refreshing...</span>'
+        instance.get('/points/' + accountId + '/refresh')
+            .then(response => {
+                if (response.status === 200 && response.data.code === 200 && response.data.data === true) {
+                    location.reload();
+                } else {
+                    showTips(response.data.msg)
+                }
+            })
+            .catch(error => {
+                console.log(error)
+            }).finally(() => {
+                element.disabled = false
+                element.innerHTML = 'Refresh'
+        })
+    }
+</script>
+
+{{ template "footer.html" .}}
