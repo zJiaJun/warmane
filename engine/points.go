@@ -44,8 +44,6 @@ func (e *Engine) CollectAccountPoints(accountId int64) error {
 	e.db.First(&account, accountId)
 	name := account.AccountName
 	c := e.getScraper(name).CloneCollector()
-	e.getScraper(name).SetRequestHeaders(c)
-	e.getScraper(name).DecodeResponse(c)
 	var bodyMsg struct {
 		Messages struct {
 			Success []string `json:"success"`

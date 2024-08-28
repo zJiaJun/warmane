@@ -21,7 +21,7 @@ const (
 )
 
 const WarmaneSiteKey = "6LfXRRsUAAAAAEApnVwrtQ7aFprn4naEcc05AZUR"
-const captchaApiKey = ""
+const CaptchaApiKey = ""
 
 const (
 	ONLINE_STATUS  = "online"

@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"github.com/gocolly/colly/v2"
 	"github.com/zJiajun/warmane/captcha"
-	"github.com/zJiajun/warmane/config"
 	"github.com/zJiajun/warmane/constant"
 	"github.com/zJiajun/warmane/logger"
+	"github.com/zJiajun/warmane/model/table"
 	"github.com/zJiajun/warmane/scraper/storage"
 )
 
-func (e *Engine) login(account *config.Account) error {
-	name := account.Username
+func (e *Engine) captchaLogin(account *table.Account) error {
+	name := account.AccountName
 	logger.Infof("配置项[useCookiesLogin]为false, 使用2captcha方式登录")
-	capt := captcha.NewCaptcha(e.config.CaptchaApiKey, e.config.WarmaneSiteKey, constant.LoginUrl)
+	capt := captcha.NewCaptcha(constant.CaptchaApiKey, constant.WarmaneSiteKey, constant.LoginUrl)
 	loginData := make(map[string]string, 5)
 	if code, err := capt.HandleCaptcha(); err == nil {
 		loginData["return"] = ""
@@ -27,8 +27,6 @@ func (e *Engine) login(account *config.Account) error {
 	}
 	_ = storage.Clear(e.db, name)
 	c := e.getScraper(name).CloneCollector()
-	e.getScraper(name).SetRequestHeaders(c)
-	e.getScraper(name).DecodeResponse(c)
 	var bodyErr error
 	var bodyMsg struct {
 		Messages struct {
@@ -58,12 +56,12 @@ func (e *Engine) login(account *config.Account) error {
 	return nil
 }
 
-func (e *Engine) logout(account *config.Account) error {
-	c := e.getScraper(account.Username).CloneCollector()
+func (e *Engine) logout(accountName string) error {
+	c := e.getScraper(accountName).CloneCollector()
 	err := c.Visit(constant.LogoutUrl)
 	if err != nil {
 		return err
 	}
-	logger.Infof("账号[%s]退出成功", account.Username)
+	logger.Infof("账号[%s]退出成功", accountName)
 	return err
 }

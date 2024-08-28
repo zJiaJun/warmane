@@ -24,16 +24,10 @@ func (s *SqliteStorage) Init() error {
 }
 
 func (s *SqliteStorage) Visited(requestID uint64) error {
-	visited := &table.Visited{RequestID: int(requestID), Visited: 1}
-	return s.db.Create(visited).Error
+	return nil
 }
 
 func (s *SqliteStorage) IsVisited(requestID uint64) (bool, error) {
-	var count int64
-	s.db.Model(&table.Visited{}).Where("request_id = ?", requestID).Count(&count)
-	if count >= 1 {
-		return true, nil
-	}
 	return false, nil
 }
 

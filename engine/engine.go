@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"github.com/zJiajun/warmane/config"
 	"github.com/zJiajun/warmane/database"
 	"github.com/zJiajun/warmane/logger"
 	"github.com/zJiajun/warmane/model/table"
@@ -14,8 +13,6 @@ type Engine struct {
 	scrapers *scraper.Scrapers
 	db       *gorm.DB
 	wg       sync.WaitGroup
-	//TODO: will be deleted
-	config *config.Config
 }
 
 func New() *Engine {
@@ -42,7 +39,7 @@ func (e *Engine) init() {
 	}
 	for _, account := range accounts {
 		e.scrapers.GetOrPut(account.AccountName)
-		go e.keepingAccountOnline(int64(account.ID))
+		//go e.keepingAccountOnline(int64(account.ID))
 	}
 }
 
@@ -55,6 +52,5 @@ func autoMigrate(db *gorm.DB) error {
 		&table.Account{},
 		&table.AccountDetails{},
 		&table.TradeInfo{},
-		&table.Visited{},
 	)
 }

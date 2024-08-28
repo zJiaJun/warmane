@@ -2,12 +2,15 @@ package engine
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/storage"
 	"github.com/zJiajun/warmane/constant"
 	"github.com/zJiajun/warmane/logger"
 	"github.com/zJiajun/warmane/model/table"
 	"math/rand/v2"
+	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -111,8 +114,10 @@ func (e *Engine) validateCookiesKey(cookies string) error {
 func (e *Engine) validAndFetchAccountInfo(accountName string, accountDetails *table.AccountDetails) error {
 	isLogin, _ := false, false
 	c := e.getScraper(accountName).CloneCollector()
-	e.getScraper(accountName).SetRequestHeaders(c)
-	e.getScraper(accountName).DecodeResponse(c)
+
+	c.OnResponse(func(response *colly.Response) {
+		logger.Info((string)(response.Body))
+	})
 	c.OnHTML("div.content-inner.left > table > tbody > tr:nth-child(2) > td", func(element *colly.HTMLElement) {
 		isLogin = strings.Contains(element.Text, accountName)
 	})
@@ -126,8 +131,8 @@ func (e *Engine) validAndFetchAccountInfo(accountName string, accountDetails *ta
 	c.OnHTML(".myPoints", func(element *colly.HTMLElement) {
 		accountDetails.Points = element.Text
 	})
-	c.OnHTML("div.content-inner.left > table > tbody > tr:nth-child(6) > td", func(element *colly.HTMLElement) {
-		accountDetails.Email = strings.TrimSpace(strings.Split(element.Text, ":")[1])
+	c.OnHTML("div.content-inner.left > table > tbody > tr:nth-child(6) > td > a", func(element *colly.HTMLElement) {
+		accountDetails.Email = strings.TrimSpace(decodeEmail(element.Attr("data-cfemail")))
 	})
 	c.OnHTML("div.content-inner.right > table > tbody > tr:nth-child(2) > td", func(element *colly.HTMLElement) {
 		accountDetails.Status = strings.TrimSpace(strings.Split(element.Text, ":")[1])
@@ -155,6 +160,22 @@ func (e *Engine) validAndFetchAccountInfo(accountName string, accountDetails *ta
 	}
 	logger.Infof("Account [%s] login success, fetch account info", accountName)
 	return nil
+}
+
+func decodeEmail(encodedEmail string) string {
+	if encodedEmail == "" {
+		return "[email protected]"
+	}
+	r, _ := strconv.ParseInt(encodedEmail[0:2], 16, 0)
+	n := 2
+	decoded := ""
+	for n < len(encodedEmail) {
+		part, _ := strconv.ParseInt(encodedEmail[n:n+2], 16, 0)
+		decoded += "%" + fmt.Sprintf("%0.2x", int(part)^int(r))
+		n += 2
+	}
+	unquoted, _ := url.QueryUnescape(decoded)
+	return unquoted
 }
 
 func (e *Engine) updateAccountInfo(account *table.Account, accountDetails *table.AccountDetails) error {

@@ -5,7 +5,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gocolly/colly/v2"
 	"github.com/zJiajun/warmane/common"
-	"github.com/zJiajun/warmane/config"
 	"github.com/zJiajun/warmane/constant"
 	"github.com/zJiajun/warmane/logger"
 	"github.com/zJiajun/warmane/model"
@@ -23,36 +22,21 @@ var (
 	onyxiaRealm    = &common.Pair[string, string]{Left: "14", Right: "Onyxia"}
 )
 
-func (e *Engine) RunTradeData() {
-	logger.Info("开始运行商场角色交易数据爬取")
-	account := e.config.Accounts[0]
-	if err := e.login(account); err != nil {
-		logger.Errorf("账号[%s]登录错误, 原因: %v", account.Username, err)
-		return
-	}
-	if err := e.trade(account); err != nil {
-		logger.Errorf("账号[%s]查询商场数据错误, 原因: %v", account.Username, err)
-		return
-	}
-}
-
-func (e *Engine) trade(account *config.Account) error {
+func (e *Engine) trade(account *table.Account) error {
 	trades, err := e.fetchTradeData(account)
 	if err != nil {
 		return err
 	}
-	err = e.storeTradeData(account.Username, trades)
+	err = e.storeTradeData(account.AccountName, trades)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (e *Engine) fetchTradeData(account *config.Account) ([]*table.TradeInfo, error) {
-	name := account.Username
+func (e *Engine) fetchTradeData(account *table.Account) ([]*table.TradeInfo, error) {
+	name := account.AccountName
 	c := e.getScraper(name).CloneCollector()
-	e.getScraper(name).SetRequestHeaders(c)
-	e.getScraper(name).DecodeResponse(c)
 	var tradeResp struct {
 		Content []string `json:"content"`
 	}
